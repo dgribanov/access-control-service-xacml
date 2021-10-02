@@ -8,28 +8,31 @@ import scala.util.{Failure, Success}
 object PolicyDecisionPoint {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
-  def apply(targets: Array[Target], attributes: Array[Attribute]) =
-    new PolicyDecisionPoint(targets, attributes)
-}
-
-class PolicyDecisionPoint(val targets: Array[Target], val attributes: Array[Attribute]) (implicit val ec: ExecutionContext) {
-  def makeDecision(policyCollection: Future[Option[PolicyCollection]]): Future[Option[Array[TargetedDecision]]] = {
+  def makeDecision(
+    targets: Array[Target],
+    attributes: Array[Attribute],
+    policyCollection: Future[Option[PolicyCollection]]
+  ): Future[Option[Array[TargetedDecision]]] = {
     policyCollection.map({
-        case Some(policyCollection) => Some(evaluate(policyCollection))
-        case None                   => None
+      case Some(policyCollection) => Some(evaluate(targets, attributes, policyCollection))
+      case None                   => None
     })
   }
 
-  private def evaluate(policyCollection: PolicyCollection): Array[TargetedDecision] = {
+  private def evaluate(
+    targets: Array[Target],
+    attributes: Array[Attribute],
+    policyCollection: PolicyCollection
+  ): Array[TargetedDecision] = {
     for {
       target <- targets
       policy <- fetchTargetedPolicies(target.objectType, target.action, policyCollection)
-      decision = checkByRules(policy.rules, combineDecisionsFunc(policy.combiningAlgorithm))
+      decision = checkByRules(policy.rules, attributes, combineDecisionsFunc(policy.combiningAlgorithm))
     } yield TargetedDecision(target, decision)
   }
 
   private def fetchTargetedPolicies(objectType: String, action: String, policyCollection: PolicyCollection): Array[Policy] = {
-    def targetMatcher(obj: WithTarget): Boolean = {
+    def targetMatcher(obj: WithTargetType): Boolean = {
       obj.target match {
         case ObjectTypeTarget(value: String) => value == objectType
         case ActionTypeTarget(value: String) => value == action
@@ -43,18 +46,21 @@ class PolicyDecisionPoint(val targets: Array[Target], val attributes: Array[Attr
       )
   }
 
-  private def checkByRules(rules: Array[Rule], f: Array[Decision] => Decision): Decision = {
+  private def checkByRules(
+    rules: Array[Rule],
+    attributes: Array[Attribute],
+    f: Array[Decision] => Decision
+  ): Decision = {
     val decisions = for {
       rule <- rules
       decision = computeDecision(
-        checkCondition(rule.condition),
+        checkCondition(rule.condition, attributes),
         conditionResolutionToDecision(
           decisionTypeToDecision(rule.positiveEffect.decision),
           decisionTypeToDecision(rule.negativeEffect.decision)
         )
       )
     } yield decision
-    println(decisions)
 
     f(decisions)
   }
@@ -66,7 +72,7 @@ class PolicyDecisionPoint(val targets: Array[Target], val attributes: Array[Attr
     }
   }
 
-  private def checkCondition(condition: Condition): Option[Boolean] = {
+  private def checkCondition(condition: Condition, attributes: Array[Attribute]): Option[Boolean] = {
     condition match {
       case CompareCondition(op, lOp, rOp) => compareOperation(op)(ExpressionValue(lOp, attributes), ExpressionValue(rOp, attributes))
     }
@@ -74,7 +80,11 @@ class PolicyDecisionPoint(val targets: Array[Target], val attributes: Array[Attr
 
   private def compareOperation(operationType: String): (ExpressionValue[Any], ExpressionValue[Any]) => Option[Boolean] = {
     operationType match {
-      case "eq" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp equals rOp
+      case "eq" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any])  => lOp equals rOp
+      case "lt" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any])  => lOp < rOp
+      case "lte" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp <= rOp
+      case "gt" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any])  => lOp > rOp
+      case "gte" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp >= rOp
     }
   }
 
@@ -106,9 +116,44 @@ class PolicyDecisionPoint(val targets: Array[Target], val attributes: Array[Attr
   }
 }
 
+/**
+ * Inspired by scala.math.PartiallyOrdered idea for compare objects
+ * but with more correct option result of compare methods
+ */
 sealed trait ExpressionValue[+T] {
   def equals[A >: T](obj: A): Option[Boolean]
+
+  def tryCompareTo [B >: T](that: B): Option[Int]
+
+  def < [B >: T](that: B): Option[Boolean] =
+    (this tryCompareTo that) match {
+      case Some(x) if x < 0 => Some(true)
+      case Some(x) if x >= 0 => Some(false)
+      case None => None
+    }
+
+  def > [B >: T](that: B): Option[Boolean] =
+    (this tryCompareTo that) match {
+      case Some(x) if x > 0 => Some(true)
+      case Some(x) if x <= 0 => Some(false)
+      case None => None
+    }
+
+  def <= [B >: T](that: B): Option[Boolean] =
+    (this tryCompareTo that) match {
+      case Some(x) if x <= 0 => Some(true)
+      case Some(x) if x > 0 => Some(false)
+      case None => None
+    }
+
+  def >= [B >: T](that: B): Option[Boolean] =
+    (this tryCompareTo that) match {
+      case Some(x) if x >= 0 => Some(true)
+      case Some(x) if x < 0 => Some(false)
+      case None => None
+    }
 }
+
 object ExpressionValue {
   def apply(paramValue: ExpressionParameterValue, attributes: Array[Attribute]): ExpressionValue[Any] = {
     paramValue match {
@@ -123,16 +168,22 @@ object ExpressionValue {
     override def equals[A >: AttributeExpressionValue](obj: A): Option[Boolean] = {
       value equals obj
     }
+
+    override def tryCompareTo[B >: AttributeExpressionValue](that: B): Option[Int] = None
   }
+
   abstract case class BoolExpressionValue(value: Boolean) extends ExpressionValue[BoolExpressionValue] {
-    override def equals[A >: BoolExpressionValue](obj: A): Option[Boolean] = {
-      obj match {
+    override def equals[A >: BoolExpressionValue](that: A): Option[Boolean] = {
+      that match {
         case BoolExpressionValue(v) => Some(value == v) // compare Boolean and Boolean
         case IntExpressionValue     => None // don`t compare Boolean and Int
         case StringExpressionValue  => None // don`t compare Boolean and String
       }
     }
+
+    override def tryCompareTo[B >: BoolExpressionValue](that: B): Option[Int] = None
   }
+
   abstract case class IntExpressionValue(value: Int) extends ExpressionValue[IntExpressionValue] {
     override def equals[A >: IntExpressionValue](obj: A): Option[Boolean] = {
       obj match {
@@ -141,7 +192,16 @@ object ExpressionValue {
         case StringExpressionValue => None // don`t compare Int and String
       }
     }
+
+    override def tryCompareTo[B >: IntExpressionValue](that: B): Option[Int] = {
+      that match {
+        case BoolExpressionValue   => None // don`t compare Int and Boolean
+        case IntExpressionValue(v) => Some(value - v) // compare Int and Int
+        case StringExpressionValue => None // don`t compare Int and String
+      }
+    }
   }
+
   abstract case class StringExpressionValue(value: String) extends ExpressionValue[StringExpressionValue] {
     override def equals[A >: StringExpressionValue](obj: A): Option[Boolean] = {
       obj match {
@@ -150,12 +210,14 @@ object ExpressionValue {
         case StringExpressionValue(v) => Some(value == v) // compare String and String
       }
     }
+
+    override def tryCompareTo[B >: StringExpressionValue](that: B): Option[Int] = None
   }
 
   private case class EmptyExpressionValue() extends ExpressionValue[EmptyExpressionValue] {
-    override def equals[A >: EmptyExpressionValue](obj: A): Option[Boolean] = {
-      None // don`t compare empty value and any other value
-    }
+    override def equals[A >: EmptyExpressionValue](obj: A): Option[Boolean] = None // don`t compare empty value and any other value
+
+    override def tryCompareTo[B >: EmptyExpressionValue](that: B): Option[Int] = None // don`t compare empty value and any other value
   }
 
   object AttributeExpressionValue {

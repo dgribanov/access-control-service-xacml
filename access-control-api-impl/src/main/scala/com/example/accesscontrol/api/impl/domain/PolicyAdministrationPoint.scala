@@ -17,8 +17,8 @@ object PolicyAdministrationPoint {
   }
 }
 
-trait WithTarget {
-  val target: Target
+trait WithTargetType {
+  val target: TargetType
 }
 
 object PolicyCollection {
@@ -31,12 +31,12 @@ object PolicySet {
   implicit val format: Format[PolicySet] = Json.format[PolicySet]
 }
 
-case class PolicySet(target: Target, combiningAlgorithm: CombiningAlgorithm, policies: Array[Policy]) extends WithTarget
+case class PolicySet(target: TargetType, combiningAlgorithm: CombiningAlgorithm, policies: Array[Policy]) extends WithTargetType
 
-sealed trait Target
-case class ObjectTypeTarget(value: String) extends Target
-case class ActionTypeTarget(value: String) extends Target
-case class AttributeTypeTarget(value: String) extends Target
+sealed trait TargetType
+case class ObjectTypeTarget(value: String) extends TargetType
+case class ActionTypeTarget(value: String) extends TargetType
+case class AttributeTypeTarget(value: String) extends TargetType
 
 object ObjectTypeTarget {
   implicit val format: Format[ObjectTypeTarget] = Json.format[ObjectTypeTarget]
@@ -50,10 +50,10 @@ object AttributeTypeTarget {
   implicit val format: Format[AttributeTypeTarget] = Json.format[AttributeTypeTarget]
 }
 
-object Target {
+object TargetType {
   import play.api.libs.json.{Reads, Writes, JsPath, JsError, JsObject, JsString}
 
-  implicit val format: Format[Target] = Format[Target] (
+  implicit val format: Format[TargetType] = Format[TargetType] (
     Reads { js =>
       // use the _type field to determine how to deserialize
       val valueType = (JsPath \ "_type").read[String].reads(js)
@@ -128,13 +128,13 @@ object Policy {
   implicit val format: Format[Policy] = Json.format[Policy]
 }
 
-case class Policy(target: Target, combiningAlgorithm: CombiningAlgorithm, rules: Array[Rule]) extends WithTarget
+case class Policy(target: TargetType, combiningAlgorithm: CombiningAlgorithm, rules: Array[Rule]) extends WithTargetType
 
 object Rule {
   implicit val format: Format[Rule] = Json.format[Rule]
 }
 
-case class Rule(target: Target, condition: Condition, positiveEffect: PositiveEffect, negativeEffect: NegativeEffect)
+case class Rule(target: TargetType, condition: Condition, positiveEffect: PositiveEffect, negativeEffect: NegativeEffect)
 
 sealed trait Condition
 case class CompareCondition(operation: String, leftOperand: ExpressionParameterValue, rightOperand: ExpressionParameterValue) extends Condition

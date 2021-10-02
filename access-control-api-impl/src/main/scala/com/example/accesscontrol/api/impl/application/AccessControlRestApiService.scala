@@ -29,8 +29,8 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
 
   override def check(subject: String, id: String): ServiceCall[AccessControlRequest, AccessControlResponse] = ServiceCall {
     request => {
-      PolicyDecisionPoint(request.targets, request.attributes)
-        .makeDecision(PolicyAdministrationPoint.buildPolicyCollection())
+      PolicyDecisionPoint
+        .makeDecision(request.targets, request.attributes, PolicyAdministrationPoint.buildPolicyCollection())
         .map[AccessControlResponse](this.convertToResponse)
     }
   }
@@ -57,6 +57,5 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
       } yield decision
 
     AccessControlResponse(decisions)
-    //AccessControlResponse("Deny")
   }
 }
