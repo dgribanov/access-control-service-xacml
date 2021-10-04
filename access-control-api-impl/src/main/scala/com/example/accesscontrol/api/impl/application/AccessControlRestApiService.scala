@@ -2,20 +2,23 @@ package com.example.accesscontrol.api.impl.application
 
 import akka.NotUsed
 import com.example.accesscontrol.api.impl.domain.{
+  Decision,
   PolicyAdministrationPoint,
   PolicyDecisionPoint,
-  TargetedDecision,
-  Decision
+  TargetedDecision
 }
 import com.example.accesscontrol.rest.api.{
   AccessControlRequest,
   AccessControlResponse,
   AccessControlService,
-  ResultedDecision
+  ResultedDecision,
+  Target,
+  Attribute
 }
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.implicitConversions
 
 /**
  * Implementation of the AccessControlService.
@@ -34,6 +37,14 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
         .map[AccessControlResponse](this.convertToResponse)
     }
   }
+
+  implicit def convertRequestTargetsToDomainTargets(
+     requestTargets: Array[Target]
+  ): Array[PolicyDecisionPoint.Target] = requestTargets.asInstanceOf[Array[PolicyDecisionPoint.Target]]
+
+  implicit def convertRequestAttributesToDomainAttributes(
+    requestAttributes: Array[Attribute]
+  ): Array[PolicyDecisionPoint.Attribute] = requestAttributes.asInstanceOf[Array[PolicyDecisionPoint.Attribute]]
 
   private def convertToResponse(targetedDecisions: Option[Array[TargetedDecision]]): AccessControlResponse = {
     targetedDecisions match {
