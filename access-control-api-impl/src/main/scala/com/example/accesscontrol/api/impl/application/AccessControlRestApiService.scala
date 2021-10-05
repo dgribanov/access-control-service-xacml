@@ -1,20 +1,9 @@
 package com.example.accesscontrol.api.impl.application
 
 import akka.NotUsed
-import com.example.accesscontrol.api.impl.domain.{
-  Decision,
-  PolicyAdministrationPoint,
-  PolicyDecisionPoint,
-  TargetedDecision
-}
-import com.example.accesscontrol.rest.api.{
-  AccessControlRequest,
-  AccessControlResponse,
-  AccessControlService,
-  ResultedDecision,
-  Target,
-  Attribute
-}
+import com.example.accesscontrol.api.impl.domain.PolicyAdministrationPoint.PolicyCollectionParsingError
+import com.example.accesscontrol.api.impl.domain.{Decision, DomainError, PolicyAdministrationPoint, PolicyCollection, PolicyDecisionPoint, TargetedDecision}
+import com.example.accesscontrol.rest.api.{AccessControlError, AccessControlRequest, AccessControlResponse, AccessControlService, AccessControlSuccessResponse, Attribute, ResultedDecision, Target}
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,27 +22,41 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
   override def check(subject: String, id: String): ServiceCall[AccessControlRequest, AccessControlResponse] = ServiceCall {
     request => {
       PolicyDecisionPoint
-        .makeDecision(request.targets, request.attributes, PolicyAdministrationPoint.buildPolicyCollection())
+        .makeDecision(request.targets, request.attributes)
         .map[AccessControlResponse](this.convertToResponse)
     }
   }
 
+  /**
+   * Used as implicit parameter for PolicyDecisionPoint.makeDecision()
+   */
+  implicit val policyCollectionFetch: () => Future[Either[PolicyCollectionParsingError, PolicyCollection]] =
+    PolicyAdministrationPoint.buildPolicyCollection
+
+  /**
+   * Used for implicit conversion of Array[Target] to Array[PolicyDecisionPoint.Target] -
+   * look at first parameter of PolicyDecisionPoint.makeDecision()
+   */
   implicit def convertRequestTargetsToDomainTargets(
      requestTargets: Array[Target]
   ): Array[PolicyDecisionPoint.Target] = requestTargets.asInstanceOf[Array[PolicyDecisionPoint.Target]]
 
+  /**
+   * Used for implicit conversion of Array[Attribute] to Array[PolicyDecisionPoint.Attribute] -
+   * look at second parameter of PolicyDecisionPoint.makeDecision()
+   */
   implicit def convertRequestAttributesToDomainAttributes(
     requestAttributes: Array[Attribute]
   ): Array[PolicyDecisionPoint.Attribute] = requestAttributes.asInstanceOf[Array[PolicyDecisionPoint.Attribute]]
 
-  private def convertToResponse(targetedDecisions: Option[Array[TargetedDecision]]): AccessControlResponse = {
+  private def convertToResponse(targetedDecisions: Either[DomainError, Array[TargetedDecision]]): AccessControlResponse = {
     targetedDecisions match {
-      case Some(targetedDecisions: Array[TargetedDecision]) => toResponse(targetedDecisions)
-      case None                                             => toResponse(Array.empty)
+      case Right(targetedDecisions) => toSuccessResponse(targetedDecisions)
+      case Left(error)              => toError(error)
     }
   }
 
-  private def toResponse(targetedDecisions: Array[TargetedDecision]): AccessControlResponse = {
+  private def toSuccessResponse(targetedDecisions: Array[TargetedDecision]): AccessControlSuccessResponse = {
     val decisions = for {
         targetedDecision <- targetedDecisions
         decision = ResultedDecision(
@@ -67,6 +70,8 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
         )
       } yield decision
 
-    AccessControlResponse(decisions)
+    AccessControlSuccessResponse(decisions)
   }
+
+  private def toError(error: DomainError): AccessControlError = AccessControlError(error.errorMessage)
 }

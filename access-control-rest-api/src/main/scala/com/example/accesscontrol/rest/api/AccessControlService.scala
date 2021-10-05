@@ -2,6 +2,7 @@ package com.example.accesscontrol.rest.api
 
 import akka.NotUsed
 import com.lightbend.lagom.scaladsl.api.{Descriptor, Service, ServiceCall}
+import com.lightbend.lagom.scaladsl.api.transport.Method
 
 trait AccessControlService extends Service {
 
@@ -22,8 +23,8 @@ trait AccessControlService extends Service {
     // @formatter:off
     named("access-control")
       .withCalls(
-        pathCall("/api/access-control/hi", hello),
-        pathCall("/api/access-control/check/:subject/:id", check _),
+        restCall(Method.GET, "/api/access-control/hi", hello),
+        restCall(Method.POST, "/api/access-control/check/:subject/:id", check _),
       )
       .withAutoAcl(true)
     // @formatter:on

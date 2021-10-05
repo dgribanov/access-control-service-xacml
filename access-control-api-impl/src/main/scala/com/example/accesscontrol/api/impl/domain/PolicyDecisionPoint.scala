@@ -20,12 +20,13 @@ object PolicyDecisionPoint {
 
   def makeDecision(
     targets: Array[Target],
-    attributes: Array[Attribute],
-    policyCollection: Future[Option[PolicyCollection]]
-  ): Future[Option[Array[TargetedDecision]]] = {
-    policyCollection.map({
-      case Some(policyCollection) => Some(evaluate(targets, attributes, policyCollection))
-      case None                   => None
+    attributes: Array[Attribute]
+  )(implicit policyCollectionFetch: () => Future[Either[DomainError, PolicyCollection]]):
+    Future[Either[DomainError, Array[TargetedDecision]]] =
+  {
+    policyCollectionFetch().map({
+      case Right(policyCollection) => Right(evaluate(targets, attributes, policyCollection))
+      case Left(error)             => Left(error)
     })
   }
 

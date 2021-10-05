@@ -1,17 +1,19 @@
 package com.example.accesscontrol.api.impl.domain
 
-import play.api.libs.json.{Format, JsSuccess, JsValue, Json}
+import play.api.libs.json.{Format, JsError, JsSuccess, JsValue, Json}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object PolicyAdministrationPoint {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
-  def buildPolicyCollection(): Future[Option[PolicyCollection]] = {
+  case class PolicyCollectionParsingError(errorMessage: String) extends DomainError
+
+  def buildPolicyCollection(): Future[Either[PolicyCollectionParsingError, PolicyCollection]] = {
     Future {
       Json.fromJson[PolicyCollection](PolicyRepository.config) match {
-        case JsSuccess(policyCollection, _) => Some(policyCollection)
-        case x                              => println(x); None // no expected errors, however think about JsError case
+        case JsSuccess(policyCollection, _) => Right(policyCollection)
+        case JsError.Message(errMsg)        => Left(PolicyCollectionParsingError(errMsg))
       }
     }
   }
