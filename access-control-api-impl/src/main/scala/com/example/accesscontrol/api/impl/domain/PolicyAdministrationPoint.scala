@@ -140,9 +140,14 @@ case class Rule(target: TargetType, condition: Condition, positiveEffect: Positi
 
 sealed trait Condition
 case class CompareCondition(operation: String, leftOperand: ExpressionParameterValue, rightOperand: ExpressionParameterValue) extends Condition
+case class CompositeCondition(predicate: String, leftCondition: Condition, rightCondition: Condition) extends Condition
 
 object CompareCondition {
   implicit val format: Format[CompareCondition] = Json.format[CompareCondition]
+}
+
+object CompositeCondition {
+  implicit val format: Format[CompositeCondition] = Json.format[CompositeCondition]
 }
 
 object Condition {
@@ -155,7 +160,8 @@ object Condition {
       valueType.fold(
         _ => JsError("type undefined or incorrect"),
         {
-          case "CompareCondition" => JsPath.read[CompareCondition].reads(js)
+          case "CompareCondition"   => JsPath.read[CompareCondition].reads(js)
+          case "CompositeCondition" => JsPath.read[CompositeCondition].reads(js)
         }
       )
     },
@@ -167,6 +173,15 @@ object Condition {
             "operation"    -> CompareCondition.format.writes(condition),
             "leftOperand"  -> CompareCondition.format.writes(condition),
             "rightOperand" -> CompareCondition.format.writes(condition)
+          )
+        )
+      case condition: CompositeCondition =>
+        JsObject(
+          Seq(
+            "_type"          -> JsString("CompositeCondition"),
+            "predicate"      -> CompositeCondition.format.writes(condition),
+            "leftCondition"  -> CompositeCondition.format.writes(condition),
+            "rightCondition" -> CompositeCondition.format.writes(condition)
           )
         )
     }

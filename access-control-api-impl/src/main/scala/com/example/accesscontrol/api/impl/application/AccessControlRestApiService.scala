@@ -6,7 +6,8 @@ import com.example.accesscontrol.api.impl.domain.{Decision, DomainError, PolicyA
 import com.example.accesscontrol.rest.api.{AccessControlError, AccessControlRequest, AccessControlResponse, AccessControlService, AccessControlSuccessResponse, Attribute, ResultedDecision, Target}
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
 import scala.language.implicitConversions
 
 /**
@@ -57,21 +58,24 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
   }
 
   private def toSuccessResponse(targetedDecisions: Array[TargetedDecision]): AccessControlSuccessResponse = {
-    val decisions = for {
-        targetedDecision <- targetedDecisions
-        decision = ResultedDecision(
-          targetedDecision.target.objectType,
-          targetedDecision.target.action,
-          targetedDecision.decision match {
-            case _: Decision.Deny          => "Deny"
-            case _: Decision.Permit        => "Permit"
-            case _: Decision.Indeterminate => "Indeterminate"
-          },
-        )
-      } yield decision
-
+    val decisions = targetedDecisions map createResultedDecision
     AccessControlSuccessResponse(decisions)
   }
 
   private def toError(error: DomainError): AccessControlError = AccessControlError(error.errorMessage)
+
+  private def createResultedDecision(targetedDecision: TargetedDecision): ResultedDecision = {
+    // block main thread while decision is completed
+    val decision = Await.result(targetedDecision.decision, 10.seconds)
+
+    ResultedDecision(
+      targetedDecision.target.objectType,
+      targetedDecision.target.action,
+      decision match {
+        case _: Decision.Deny          => "Deny"
+        case _: Decision.Permit        => "Permit"
+        case _: Decision.Indeterminate => "Indeterminate"
+      },
+    )
+  }
 }

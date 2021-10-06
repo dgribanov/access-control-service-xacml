@@ -1,7 +1,7 @@
 package com.example.accesscontrol.api.impl.domain
 
+import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 object PolicyDecisionPoint {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
@@ -17,28 +17,25 @@ object PolicyDecisionPoint {
   type AttributeValue = {
     val value: Any
   }
+  type PolicyCollectionFetch = () => Future[Either[DomainError, PolicyCollection]]
 
   def makeDecision(
     targets: Array[Target],
     attributes: Array[Attribute]
-  )(implicit policyCollectionFetch: () => Future[Either[DomainError, PolicyCollection]]):
-    Future[Either[DomainError, Array[TargetedDecision]]] =
-  {
+  )(implicit policyCollectionFetch: PolicyCollectionFetch): Future[Either[DomainError, Array[TargetedDecision]]] = {
     policyCollectionFetch().map({
-      case Right(policyCollection) => Right(evaluate(targets, attributes, policyCollection))
+      case Right(policyCollection) => Right(evaluate(policyCollection)(targets, attributes))
       case Left(error)             => Left(error)
     })
   }
 
   private def evaluate(
-    targets: Array[Target],
-    attributes: Array[Attribute],
     policyCollection: PolicyCollection
-  ): Array[TargetedDecision] = {
+  )(implicit targets: Array[Target], attributes: Array[Attribute]): Array[TargetedDecision] = {
     for {
       target <- targets
       policy <- fetchTargetedPolicies(target.objectType, target.action, policyCollection)
-      decision = checkByRules(policy.rules, attributes, combineDecisionsFunc(policy.combiningAlgorithm))
+      decision = checkByRules(policy.rules, combineDecisionsFunc(policy.combiningAlgorithm))
     } yield TargetedDecision(target, decision)
   }
 
@@ -60,49 +57,57 @@ object PolicyDecisionPoint {
 
   private def checkByRules(
     rules: Array[Rule],
-    attributes: Array[Attribute],
-    f: Array[Decision] => Decision
-  ): Decision = {
+    f: Future[List[Decision]] => Future[Decision]
+  )(implicit attributes: Array[Attribute]): Future[Decision] = {
     val decisions = for {
       rule <- rules
       decision = computeDecision(
-        checkCondition(rule.condition, attributes),
-        conditionResolutionToDecision(
-          decisionTypeToDecision(rule.positiveEffect.decision),
-          decisionTypeToDecision(rule.negativeEffect.decision)
-        )
+        checkCondition(rule.condition),
+        {
+          case true  => decisionTypeToDecision(rule.positiveEffect.decision)
+          case false => decisionTypeToDecision(rule.negativeEffect.decision)
+        }
       )
     } yield decision
 
-    f(decisions)
+    f(Future.sequence(decisions.toList))
   }
 
-  private def computeDecision(resolution: Option[Boolean], f: Boolean => Decision): Decision = {
-    resolution match {
-      case Some(resolution) => f(resolution)
-      case None             => Decision.Indeterminate()
+  private def computeDecision(resolution: Future[Option[Boolean]], f: Boolean => Decision): Future[Decision] = {
+    resolution map {
+      case Some(res) => f(res)
+      case None      => Decision.Indeterminate()
     }
   }
 
-  private def checkCondition(condition: Condition, attributes: Array[Attribute]): Option[Boolean] = {
+  private def checkCondition(condition: Condition)(implicit attributes: Array[Attribute]): Future[Option[Boolean]] = {
     condition match {
-      case CompareCondition(op, lOp, rOp) => compareOperation(op)(ExpressionValue(lOp, attributes), ExpressionValue(rOp, attributes))
+      case CompareCondition(op, lOp, rOp)         => compareOperation(op, ExpressionValue(lOp), ExpressionValue(rOp))
+      case CompositeCondition(pred, lCond, rCond) => composeConditions(pred, lCond, rCond)
     }
   }
 
-  private def compareOperation(operationType: String): (ExpressionValue[Any], ExpressionValue[Any]) => Option[Boolean] = {
+  private def compareOperation(operationType: String, lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]): Future[Option[Boolean]] = {
     operationType match {
-      case "eq"  => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp equals rOp
-      case "lt"  => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp < rOp
-      case "lte" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp <= rOp
-      case "gt"  => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp > rOp
-      case "gte" => (lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]) => lOp >= rOp
+      case "eq"  => Future { lOp equals rOp }
+      case "lt"  => Future { lOp < rOp }
+      case "lte" => Future { lOp <= rOp }
+      case "gt"  => Future { lOp > rOp }
+      case "gte" => Future { lOp >= rOp }
     }
   }
 
-  private def conditionResolutionToDecision(positiveEffectDecision: Decision, negativeEffectDecision: Decision): Boolean => Decision = {
-    case true => positiveEffectDecision
-    case false => negativeEffectDecision
+  private def composeConditions(predicate: String, lCond: Condition, rCond: Condition)(implicit attributes: Array[Attribute]): Future[Option[Boolean]] = {
+    predicate match {
+      case "and" => checkCondition(lCond) zip checkCondition(rCond) map {
+        case (Some(lResult), Some(rResult)) => Some(lResult && rResult)
+        case _                              => Some(false)
+      }
+      case "or"  => checkCondition(lCond) zip checkCondition(rCond) map {
+        case (Some(lResult), Some(rResult)) => Some(lResult || rResult)
+        case _                              => Some(false)
+      }
+    }
   }
 
   private def decisionTypeToDecision(decisionType: String): Decision = {
@@ -112,19 +117,24 @@ object PolicyDecisionPoint {
     }
   }
 
-  private def combineDecisionsFunc(combiningAlgorithm: CombiningAlgorithm): Array[Decision] => Decision = {
+  private def combineDecisionsFunc(combiningAlgorithm: CombiningAlgorithm): Future[List[Decision]] => Future[Decision] = {
+    @tailrec
+    def denyOverride(decisions: List[Decision], combinedDecision: Decision): Decision = {
+      if (decisions == Nil) combinedDecision
+      else if (decisions match {
+        case (_: Decision.Deny) :: _ => true
+        case _                       => false
+      }) decisions.head
+      else denyOverride(decisions.tail, decisions.head match {
+        case decision: Decision.Permit => decision
+        case _                         => combinedDecision
+      })
+    }
+
     combiningAlgorithm match {
-      case DenyOverride(_) =>
-        (decisions: Array[Decision]) =>
-          decisions.foldRight[Decision](Decision.Indeterminate())(
-            (decision, combinedDecision) => (decision, combinedDecision) match {
-              case (d: Decision.Deny, _)                                  => d
-              case (_, d: Decision.Deny)                                  => d
-              case (d: Decision.Permit, _)                                => d
-              case (_: Decision.Indeterminate, d: Decision.Permit)        => d
-              case (_: Decision.Indeterminate, d: Decision.Indeterminate) => d
-            }
-          )
+      case _: DenyOverride =>
+        (decisions: Future[List[Decision]]) =>
+          decisions map (denyOverride(_, Decision.Indeterminate()))
     }
   }
 }
@@ -148,7 +158,7 @@ object Decision {
   }
 }
 
-abstract class TargetedDecision(val target: PolicyDecisionPoint.Target, val decision: Decision)
+abstract class TargetedDecision(val target: PolicyDecisionPoint.Target, val decision: Future[Decision])
 object TargetedDecision {
-  def apply(target: PolicyDecisionPoint.Target, decision: Decision): TargetedDecision = new TargetedDecision(target, decision) {}
+  def apply(target: PolicyDecisionPoint.Target, decision: Future[Decision]): TargetedDecision = new TargetedDecision(target, decision) {}
 }

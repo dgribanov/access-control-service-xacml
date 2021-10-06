@@ -11,30 +11,30 @@ sealed trait ExpressionValue[+T] {
 
   def < [B >: T](that: B): Option[Boolean] =
     this tryCompareTo that match {
-      case Some(x) if x < 0 => Some(true)
+      case Some(x) if x < 0  => Some(true)
       case Some(x) if x >= 0 => Some(false)
-      case None => None
+      case None              => None
     }
 
   def > [B >: T](that: B): Option[Boolean] =
     this tryCompareTo that match {
-      case Some(x) if x > 0 => Some(true)
+      case Some(x) if x > 0  => Some(true)
       case Some(x) if x <= 0 => Some(false)
-      case None => None
+      case None              => None
     }
 
   def <= [B >: T](that: B): Option[Boolean] =
     this tryCompareTo that match {
       case Some(x) if x <= 0 => Some(true)
-      case Some(x) if x > 0 => Some(false)
-      case None => None
+      case Some(x) if x > 0  => Some(false)
+      case None              => None
     }
 
   def >= [B >: T](that: B): Option[Boolean] =
     this tryCompareTo that match {
       case Some(x) if x >= 0 => Some(true)
-      case Some(x) if x < 0 => Some(false)
-      case None => None
+      case Some(x) if x < 0  => Some(false)
+      case None              => None
     }
 }
 
@@ -42,7 +42,7 @@ object ExpressionValue {
   type Attribute = PolicyDecisionPoint.Attribute
   type AttributeValue = PolicyDecisionPoint.AttributeValue
 
-  def apply(paramValue: ExpressionParameterValue, attributes: Array[Attribute]): ExpressionValue[Any] = {
+  def apply(paramValue: ExpressionParameterValue)(implicit attributes: Array[Attribute]): ExpressionValue[Any] = {
     paramValue match {
       case AttributeParameterValue(id) => AttributeExpressionValue(id, attributes)
       case BoolParameterValue(value)   => BoolExpressionValue(value)
