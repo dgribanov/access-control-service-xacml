@@ -452,6 +452,109 @@ object PolicyRepository {
               "value": true
             }
           }
+        },
+        {
+          "_type": "Rule",
+          "target": {
+            "_type": "AttributeTypeTarget",
+            "value": "placeType"
+          },
+          "positiveEffect": {
+            "_type": "PositiveEffect",
+            "decision": "Deny"
+          },
+          "negativeEffect": {
+            "_type": "NegativeEffect",
+            "decision": "Permit"
+          },
+          "condition": {
+            "_type": "CompareCondition",
+            "operation": "eq",
+            "leftOperand": {
+              "_type": "AttributeValue",
+              "id": "placeType"
+            },
+            "rightOperand": {
+              "_type": "StringValue",
+              "value": "office"
+            }
+          }
+        }]
+      }]
+    },
+    {
+      "_type": "PolicySet",
+      "target": {
+        "_type": "ObjectTypeTarget",
+        "value": "scooter"
+      },
+      "combiningAlgorithm": {
+        "_type": "CombiningAlgorithm",
+        "algorithm": "permit-override"
+      },
+      "policies": [{
+        "_type": "Policy",
+        "target": {
+          "_type": "ActionTypeTarget",
+          "value": "ride"
+        },
+        "combiningAlgorithm": {
+          "_type": "CombiningAlgorithm",
+          "algorithm": "permit-override"
+        },
+        "rules": [{
+          "_type": "Rule",
+          "target": {
+            "_type": "AttributeTypeTarget",
+            "value": "permissionToRideScooter"
+          },
+          "positiveEffect": {
+            "_type": "PositiveEffect",
+            "decision": "Permit"
+          },
+          "negativeEffect": {
+            "_type": "NegativeEffect",
+            "decision": "Deny"
+          },
+          "condition": {
+            "_type": "CompareCondition",
+            "operation": "eq",
+            "leftOperand": {
+              "_type": "AttributeValue",
+              "id": "permissionToRideScooter"
+            },
+            "rightOperand": {
+              "_type": "BoolValue",
+              "value": true
+            }
+          }
+        },
+        {
+          "_type": "Rule",
+          "target": {
+            "_type": "AttributeTypeTarget",
+            "value": "profession"
+          },
+          "positiveEffect": {
+            "_type": "PositiveEffect",
+            "decision": "Permit"
+          },
+          "negativeEffect": {
+            "_type": "NegativeEffect",
+            "decision": "Deny"
+          },
+          "condition": {
+            "_type": "CompareCondition",
+            "operation": "eq",
+            "leftOperand": {
+              "_type": "AttributeValue",
+              "id": "profession"
+            },
+            "rightOperand": {
+              "_type": "StringValue",
+              "value": "courier"
+            }
+          }
         }]
       }]
     }

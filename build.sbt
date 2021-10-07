@@ -5,7 +5,7 @@ ThisBuild / version := "1.1-SNAPSHOT"
 ThisBuild / scalaVersion := "2.13.0"
 
 val macwire = "com.softwaremill.macwire" %% "macros" % "2.4.1" % "provided"
-val scalaTest = "org.scalatest" %% "scalatest" % "3.1.1" % Test
+val scalaTest = "org.scalatest" %% "scalatest" % "3.2.10" % Test
 
 lazy val `hello-world` = (project in file("."))
   .aggregate(`access-control-rest-api`, `access-control-api-impl`)

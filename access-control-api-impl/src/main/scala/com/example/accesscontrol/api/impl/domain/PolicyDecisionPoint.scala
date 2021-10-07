@@ -8,6 +8,7 @@ object PolicyDecisionPoint {
 
   type Target = {
     val objectType: String
+    val objectId: Int
     val action: String
   }
   type Attribute = {
