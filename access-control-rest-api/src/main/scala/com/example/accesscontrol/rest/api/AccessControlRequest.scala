@@ -104,9 +104,10 @@ object Attribute {
 /**
  * The access control target class.
  * @param objectType - object type (for example "bicycle")
+ * @param objectId - object ID (for example 1)
  * @param action - action name (for example "ride")
  */
-case class Target(objectType: String, action: String)
+case class Target(objectType: String, objectId: Int, action: String)
 
 object Target {
   /**

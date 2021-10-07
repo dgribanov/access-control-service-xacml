@@ -96,9 +96,14 @@ object TargetType {
 
 sealed trait CombiningAlgorithm
 case class DenyOverride(algorithm: String) extends CombiningAlgorithm
+case class PermitOverride(algorithm: String) extends CombiningAlgorithm
 
 object DenyOverride {
   implicit val format: Format[DenyOverride] = Json.format[DenyOverride]
+}
+
+object PermitOverride {
+  implicit val format: Format[PermitOverride] = Json.format[PermitOverride]
 }
 
 object CombiningAlgorithm {
@@ -111,7 +116,8 @@ object CombiningAlgorithm {
       valueType.fold(
         _ => JsError("algorithm undefined or incorrect"),
         {
-          case "deny-override" => JsPath.read[DenyOverride].reads(js)
+          case "deny-override"   => JsPath.read[DenyOverride].reads(js)
+          case "permit-override" => JsPath.read[PermitOverride].reads(js)
         }
       )
     },
@@ -120,6 +126,12 @@ object CombiningAlgorithm {
         JsObject(
           Seq(
             "algorithm" -> JsString("deny-override"),
+          )
+        )
+      case _: PermitOverride =>
+        JsObject(
+          Seq(
+            "algorithm" -> JsString("permit-override"),
           )
         )
     }
@@ -315,6 +327,125 @@ object PolicyRepository {
             "leftOperand": {
               "_type": "AttributeValue",
               "id": "permissionToRideBicycle"
+            },
+            "rightOperand": {
+              "_type": "BoolValue",
+              "value": true
+            }
+          }
+        }]
+      },
+      {
+        "_type": "Policy",
+        "target": {
+          "_type": "ActionTypeTarget",
+          "value": "rent"
+        },
+        "combiningAlgorithm": {
+          "_type": "CombiningAlgorithm",
+          "algorithm": "permit-override"
+        },
+        "rules": [{
+          "_type": "Rule",
+          "target": {
+            "_type": "AttributeTypeTarget",
+            "value": "permissionToRentBicycle"
+          },
+          "positiveEffect": {
+            "_type": "PositiveEffect",
+            "decision": "Permit"
+          },
+          "negativeEffect": {
+            "_type": "NegativeEffect",
+            "decision": "Deny"
+          },
+          "condition": {
+            "_type": "CompositeCondition",
+            "predicate": "and",
+            "leftCondition": {
+              "_type": "CompareCondition",
+              "operation": "eq",
+              "leftOperand": {
+                "_type": "AttributeValue",
+                "id": "permissionToRentBicycle"
+              },
+              "rightOperand": {
+                "_type": "BoolValue",
+                "value": true
+              }
+            },
+            "rightCondition": {
+              "_type": "CompositeCondition",
+              "predicate": "or",
+              "leftCondition": {
+                "_type": "CompareCondition",
+                "operation": "gte",
+                "leftOperand": {
+                  "_type": "AttributeValue",
+                  "id": "personAge"
+                },
+                "rightOperand": {
+                  "_type": "IntValue",
+                  "value": 18
+                }
+              },
+              "rightCondition": {
+                "_type": "CompareCondition",
+                "operation": "eq",
+                "leftOperand": {
+                  "_type": "AttributeValue",
+                  "id": "bicycleType"
+                },
+                "rightOperand": {
+                  "_type": "StringValue",
+                  "value": "tricycle"
+                }
+              }
+            }
+          }
+        }]
+      }]
+    },
+    {
+      "_type": "PolicySet",
+      "target": {
+        "_type": "ObjectTypeTarget",
+        "value": "skateboard"
+      },
+      "combiningAlgorithm": {
+        "_type": "CombiningAlgorithm",
+        "algorithm": "deny-override"
+      },
+      "policies": [{
+        "_type": "Policy",
+        "target": {
+          "_type": "ActionTypeTarget",
+          "value": "ride"
+        },
+        "combiningAlgorithm": {
+          "_type": "CombiningAlgorithm",
+          "algorithm": "deny-override"
+        },
+        "rules": [{
+          "_type": "Rule",
+          "target": {
+            "_type": "AttributeTypeTarget",
+            "value": "permissionToRideSkateboard"
+          },
+          "positiveEffect": {
+            "_type": "PositiveEffect",
+            "decision": "Permit"
+          },
+          "negativeEffect": {
+            "_type": "NegativeEffect",
+            "decision": "Deny"
+          },
+          "condition": {
+            "_type": "CompareCondition",
+            "operation": "eq",
+            "leftOperand": {
+              "_type": "AttributeValue",
+              "id": "permissionToRideSkateboard"
             },
             "rightOperand": {
               "_type": "BoolValue",

@@ -119,22 +119,34 @@ object PolicyDecisionPoint {
 
   private def combineDecisionsFunc(combiningAlgorithm: CombiningAlgorithm): Future[List[Decision]] => Future[Decision] = {
     @tailrec
-    def denyOverride(decisions: List[Decision], combinedDecision: Decision): Decision = {
-      if (decisions == Nil) combinedDecision
-      else if (decisions match {
-        case (_: Decision.Deny) :: _ => true
-        case _                       => false
-      }) decisions.head
-      else denyOverride(decisions.tail, decisions.head match {
-        case decision: Decision.Permit => decision
-        case _                         => combinedDecision
-      })
+    def denyOverride(decisions: List[Decision], defaultDecision: Decision): Decision = {
+      if (decisions == Nil) defaultDecision
+      else if (decisions.head match {
+        case _: Decision.Deny          => true
+        case _: Decision.Indeterminate => true
+        case _: Decision.Permit        => false
+      }) Decision.Deny()
+      else denyOverride(decisions.tail, Decision.Permit())
+    }
+
+    @tailrec
+    def permitOverride(decisions: List[Decision], defaultDecision: Decision): Decision = {
+      if (decisions == Nil) defaultDecision
+      else if (decisions.head match {
+        case _: Decision.Permit        => true
+        case _: Decision.Indeterminate => false
+        case _: Decision.Deny          => false
+      }) Decision.Permit()
+      else permitOverride(decisions.tail, Decision.Deny())
     }
 
     combiningAlgorithm match {
       case _: DenyOverride =>
         (decisions: Future[List[Decision]]) =>
-          decisions map (denyOverride(_, Decision.Indeterminate()))
+          decisions map (denyOverride(_, Decision.Deny()))
+      case _: PermitOverride =>
+        (decisions: Future[List[Decision]]) =>
+          decisions map (permitOverride(_, Decision.Deny()))
     }
   }
 }

@@ -13,7 +13,7 @@ trait AccessControlService extends Service {
 
   /**
    * Example: curl -H "Content-Type: application/json" -X POST
-   * -d '{"targets": [{"objectType": "bicycle", "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}]}'
+   * -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}]}'
    * http://localhost:9000/api/access-control/check/bla/blo
    */
   def check(subject: String, id: String): ServiceCall[AccessControlRequest, AccessControlResponse]

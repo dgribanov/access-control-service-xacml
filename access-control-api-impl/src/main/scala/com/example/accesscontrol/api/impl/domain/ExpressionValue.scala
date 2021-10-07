@@ -42,61 +42,56 @@ object ExpressionValue {
   type Attribute = PolicyDecisionPoint.Attribute
   type AttributeValue = PolicyDecisionPoint.AttributeValue
 
-  def apply(paramValue: ExpressionParameterValue)(implicit attributes: Array[Attribute]): ExpressionValue[Any] = {
+  def apply(paramValue: ExpressionParameterValue)(implicit attributes: Array[Attribute]): ExpressionValue[Any] =
     paramValue match {
       case AttributeParameterValue(id) => AttributeExpressionValue(id, attributes)
       case BoolParameterValue(value)   => BoolExpressionValue(value)
       case IntParameterValue(value)    => IntExpressionValue(value)
       case StringParameterValue(value) => StringExpressionValue(value)
     }
-  }
 
   abstract case class AttributeExpressionValue(value: ExpressionValue[Any]) extends ExpressionValue[AttributeExpressionValue] {
-    override def equals[A >: AttributeExpressionValue](obj: A): Option[Boolean] = {
+    override def equals[A >: AttributeExpressionValue](obj: A): Option[Boolean] =
       value equals obj
-    }
 
-    override def tryCompareTo[B >: AttributeExpressionValue](that: B): Option[Int] = None
+    override def tryCompareTo[B >: AttributeExpressionValue](that: B): Option[Int] =
+      value tryCompareTo that
   }
 
   abstract case class BoolExpressionValue(value: Boolean) extends ExpressionValue[BoolExpressionValue] {
-    override def equals[A >: BoolExpressionValue](that: A): Option[Boolean] = {
+    override def equals[A >: BoolExpressionValue](that: A): Option[Boolean] =
       that match {
         case BoolExpressionValue(v) => Some(value == v) // compare Boolean and Boolean
         case IntExpressionValue     => None // don`t compare Boolean and Int
         case StringExpressionValue  => None // don`t compare Boolean and String
       }
-    }
 
     override def tryCompareTo[B >: BoolExpressionValue](that: B): Option[Int] = None
   }
 
   abstract case class IntExpressionValue(value: Int) extends ExpressionValue[IntExpressionValue] {
-    override def equals[A >: IntExpressionValue](obj: A): Option[Boolean] = {
+    override def equals[A >: IntExpressionValue](obj: A): Option[Boolean] =
       obj match {
         case BoolExpressionValue   => None // don`t compare Int and Boolean
         case IntExpressionValue(v) => Some(value == v) // compare Int and Int
         case StringExpressionValue => None // don`t compare Int and String
       }
-    }
 
-    override def tryCompareTo[B >: IntExpressionValue](that: B): Option[Int] = {
+    override def tryCompareTo[B >: IntExpressionValue](that: B): Option[Int] =
       that match {
         case BoolExpressionValue   => None // don`t compare Int and Boolean
         case IntExpressionValue(v) => Some(value - v) // compare Int and Int
         case StringExpressionValue => None // don`t compare Int and String
       }
-    }
   }
 
   abstract case class StringExpressionValue(value: String) extends ExpressionValue[StringExpressionValue] {
-    override def equals[A >: StringExpressionValue](obj: A): Option[Boolean] = {
+    override def equals[A >: StringExpressionValue](obj: A): Option[Boolean] =
       obj match {
         case BoolExpressionValue      => None // don`t compare String and Boolean
         case IntExpressionValue       => None // don`t compare String and Int
         case StringExpressionValue(v) => Some(value == v) // compare String and String
       }
-    }
 
     override def tryCompareTo[B >: StringExpressionValue](that: B): Option[Int] = None
   }
@@ -115,13 +110,12 @@ object ExpressionValue {
       new ExpressionValue.AttributeExpressionValue(value) {}
     }
 
-    private def toExpressionValue(attributeValue: AttributeValue): ExpressionValue[Any] = {
+    private def toExpressionValue(attributeValue: AttributeValue): ExpressionValue[Any] =
       attributeValue.value match {
         case value: String  => StringExpressionValue(value)
         case value: Boolean => BoolExpressionValue(value)
         case value: Int     => IntExpressionValue(value)
       }
-    }
   }
 
   object BoolExpressionValue {
