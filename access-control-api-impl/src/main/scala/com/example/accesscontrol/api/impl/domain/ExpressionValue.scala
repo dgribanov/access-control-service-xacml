@@ -61,9 +61,10 @@ object ExpressionValue {
   abstract case class BoolExpressionValue(value: Boolean) extends ExpressionValue[BoolExpressionValue] {
     override def equals[A >: BoolExpressionValue](that: A): Option[Boolean] =
       that match {
-        case BoolExpressionValue(v)      => Some(value == v) // compare Boolean and Boolean
-        case IntExpressionValue          => None // don`t compare Boolean and Int
-        case StringExpressionValue       => None // don`t compare Boolean and String
+        case BoolExpressionValue(v)            => Some(value == v) // compare Boolean and Boolean
+        case IntExpressionValue                => None // don`t compare Boolean and Int
+        case StringExpressionValue             => None // don`t compare Boolean and String
+        case attrVal: AttributeExpressionValue => attrVal equals this // compare Boolean and Attribute
       }
 
     override def tryCompareTo[B >: BoolExpressionValue](that: B): Option[Int] = None
@@ -72,25 +73,28 @@ object ExpressionValue {
   abstract case class IntExpressionValue(value: Int) extends ExpressionValue[IntExpressionValue] {
     override def equals[A >: IntExpressionValue](obj: A): Option[Boolean] =
       obj match {
-        case BoolExpressionValue   => None // don`t compare Int and Boolean
-        case IntExpressionValue(v) => Some(value == v) // compare Int and Int
-        case StringExpressionValue => None // don`t compare Int and String
+        case BoolExpressionValue               => None // don`t compare Int and Boolean
+        case IntExpressionValue(v)             => Some(value == v) // compare Int and Int
+        case StringExpressionValue             => None // don`t compare Int and String
+        case attrVal: AttributeExpressionValue => attrVal equals this // compare Int and Attribute
       }
 
     override def tryCompareTo[B >: IntExpressionValue](that: B): Option[Int] =
       that match {
-        case BoolExpressionValue   => None // don`t compare Int and Boolean
-        case IntExpressionValue(v) => Some(value - v) // compare Int and Int
-        case StringExpressionValue => None // don`t compare Int and String
+        case BoolExpressionValue               => None // don`t compare Int and Boolean
+        case IntExpressionValue(v)             => Some(value - v) // compare Int and Int
+        case StringExpressionValue             => None // don`t compare Int and String
+        case attrVal: AttributeExpressionValue => attrVal tryCompareTo this // compare Int and Attribute
       }
   }
 
   abstract case class StringExpressionValue(value: String) extends ExpressionValue[StringExpressionValue] {
     override def equals[A >: StringExpressionValue](obj: A): Option[Boolean] =
       obj match {
-        case BoolExpressionValue      => None // don`t compare String and Boolean
-        case IntExpressionValue       => None // don`t compare String and Int
-        case StringExpressionValue(v) => Some(value == v) // compare String and String
+        case BoolExpressionValue               => None // don`t compare String and Boolean
+        case IntExpressionValue                => None // don`t compare String and Int
+        case StringExpressionValue(v)          => Some(value == v) // compare String and String
+        case attrVal: AttributeExpressionValue => attrVal equals this // compare String and Attribute
       }
 
     override def tryCompareTo[B >: StringExpressionValue](that: B): Option[Int] = None

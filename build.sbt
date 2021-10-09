@@ -7,7 +7,7 @@ ThisBuild / scalaVersion := "2.13.0"
 val macwire = "com.softwaremill.macwire" %% "macros" % "2.4.1" % "provided"
 val scalaTest = "org.scalatest" %% "scalatest" % "3.2.10" % Test
 
-lazy val `hello-world` = (project in file("."))
+lazy val `access-control` = (project in file("."))
   .aggregate(`access-control-rest-api`, `access-control-api-impl`)
 
 lazy val `access-control-rest-api` = (project in file("access-control-rest-api"))

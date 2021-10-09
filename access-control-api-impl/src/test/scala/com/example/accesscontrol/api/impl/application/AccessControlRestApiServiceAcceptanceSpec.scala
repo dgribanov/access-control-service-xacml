@@ -2,7 +2,7 @@ package com.example.accesscontrol.api.impl.application
 
 import com.lightbend.lagom.scaladsl.server.LocalServiceLocator
 import com.lightbend.lagom.scaladsl.testkit.ServiceTest
-import com.example.accesscontrol.rest.api.{AccessControlRequest, AccessControlSuccessResponse, AccessControlError, Target, Attribute, AttributeValueBool}
+import com.example.accesscontrol.rest.api.{AccessControlRequest, AccessControlSuccessResponse, AccessControlError, Target}
 
 import com.example.accesscontrol.api.impl.{BaseAcceptanceSpec, AccessControlApplication}
 import com.example.accesscontrol.rest.api.AccessControlService
@@ -33,7 +33,7 @@ class AccessControlRestApiServiceAcceptanceSpec extends BaseAcceptanceSpec {
   }
 
   Feature("Метод проверки доступа пользователя") {
-    Scenario("Хочу проверить проверить доступ пользователя (субъекта доступа) к действию над определённым объектом") {
+    Scenario("Хочу проверить доступ пользователя (субъекта доступа) к действию над определённым объектом") {
 
       Given("** проверяю доступ пользователя типа User с ID `user1`")
       Given("** к действию кататься (`ride`) в отношении объекта типа велосипед (`bicycle`) с ID 1")
