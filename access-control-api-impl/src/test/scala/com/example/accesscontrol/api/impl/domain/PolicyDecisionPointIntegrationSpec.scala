@@ -1,13 +1,16 @@
 package com.example.accesscontrol.api.impl.domain
 
 import com.example.accesscontrol.api.impl.infrastructure.TestPolicyRepositoryImpl
-import com.example.accesscontrol.api.impl.IntegrationSpec
+import com.example.accesscontrol.api.impl.BaseIntegrationSpec
+import org.scalatest.Assertion
+
+import scala.concurrent.Future
 
 class Target (val objectType: String, val objectId: Int, val action: String)
 class Attribute (val name: String, val value: AttributeValue)
 class AttributeValue (val value: Any)
 
-class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
+class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   implicit val policyRepository: PolicyRepository = new TestPolicyRepositoryImpl
   implicit val policyCollectionFetch: PolicyDecisionPoint.PolicyCollectionFetch =
@@ -29,12 +32,7 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
 
       Then("<<< убеждаемся, что проверка доступа НЕ ПРИМЕНИМА для объекта `танк`, МЫ МИРНЫЕ ЛЮДИ, У НАС НЕТ ТАНКОВ! (пока нет)")
-      (decisions map { checkless {
-        case Right(targetedDecisions) => targetedDecisions(0) match {
-          case td: TargetedDecision => td.decision
-        }
-      }
-      }).flatten map { decision => assert(decision.isInstanceOf[Decision.NonApplicable])}
+      assertDecision(decisions, nonApplicable = true)
     }
   }
 
@@ -52,12 +50,7 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
-      (decisions map { checkless {
-        case Right(targetedDecisions) => targetedDecisions(0) match {
-          case td: TargetedDecision => td.decision
-        }
-      }
-      }).flatten map { decision => assert(decision.isInstanceOf[Decision.Permit])}
+      assertDecision(decisions, permit = true)
     }
 
     Scenario("(1.2) Пользователь #2 хочет покататься на велосипеде #1") {
@@ -73,12 +66,7 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
-      (decisions map { checkless {
-        case Right(targetedDecisions) => targetedDecisions(0) match {
-          case td: TargetedDecision => td.decision
-        }
-      }
-      }).flatten map { decision => assert(decision.isInstanceOf[Decision.Deny])}
+      assertDecision(decisions, deny = true)
     }
 
     Scenario("(1.3) Пользователь #3 хочет арендовать велосипед #1") {
@@ -100,12 +88,7 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
-      (decisions map { checkless {
-        case Right(targetedDecisions) => targetedDecisions(0) match {
-          case td: TargetedDecision => td.decision
-        }
-      }
-      }).flatten map { decision => assert(decision.isInstanceOf[Decision.Permit])}
+      assertDecision(decisions, permit = true)
     }
 
     Scenario("(1.4) Пользователь #3 хочет арендовать велосипед #2") {
@@ -127,12 +110,7 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
-      (decisions map { checkless {
-        case Right(targetedDecisions) => targetedDecisions(0) match {
-          case td: TargetedDecision => td.decision
-        }
-      }
-      }).flatten map { decision => assert(decision.isInstanceOf[Decision.Deny])}
+      assertDecision(decisions, deny = true)
     }
 
     Scenario("(1.5) Пользователь #4 хочет арендовать велосипед #3") {
@@ -154,12 +132,7 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
-      (decisions map { checkless {
-        case Right(targetedDecisions) => targetedDecisions(0) match {
-          case td: TargetedDecision => td.decision
-        }
-      }
-      }).flatten map { decision => assert(decision.isInstanceOf[Decision.Permit])}
+      assertDecision(decisions, permit = true)
     }
 
     Scenario("(1.6) Пользователь #5 хочет арендовать велосипед #1") {
@@ -181,13 +154,28 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
-      (decisions map { checkless {
-        case Right(targetedDecisions) => targetedDecisions(0) match {
-          case td: TargetedDecision => td.decision
-        }
-      }
-      }).flatten map { decision => assert(decision.isInstanceOf[Decision.Deny])}
+      assertDecision(decisions, deny = true)
     }
+  }
+
+  private def assertDecision(
+    decisions: Future[Either[DomainError, Array[TargetedDecision]]],
+    deny: Boolean = false,
+    permit: Boolean = false,
+    indeterminate: Boolean = false,
+    nonApplicable: Boolean = false
+  ): Future[Assertion] = {
+    (decisions map { checkless {
+      case Right(targetedDecisions) => targetedDecisions(0) match {
+        case td: TargetedDecision => td.decision
+      }
+    }
+    }).flatten map { decision => assert(decision match {
+      case _: Decision.Deny          => deny
+      case _: Decision.Permit        => permit
+      case _: Decision.Indeterminate => indeterminate
+      case _: Decision.NonApplicable => nonApplicable
+    })}
   }
 
   /**
@@ -195,5 +183,5 @@ class PolicyDecisionPointIntegrationSpec extends IntegrationSpec {
    * when Scala `@unchecked` annotation not applicable
    * @see https://stackoverflow.com/questions/10507419/scala-where-to-put-the-unchecked-annotation-in-a-foreach
    */
-  private[this] def checkless[A,B](pf: PartialFunction[A,B]): A => B = pf: A => B
+  private def checkless[A,B](pf: PartialFunction[A,B]): A => B = pf: A => B
 }

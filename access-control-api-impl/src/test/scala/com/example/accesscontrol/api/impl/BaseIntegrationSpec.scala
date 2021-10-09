@@ -5,6 +5,6 @@ import org.scalatest.featurespec.AsyncFeatureSpec
 
 import scala.concurrent.ExecutionContext
 
-abstract class IntegrationSpec extends AsyncFeatureSpec with GivenWhenThen {
+abstract class BaseIntegrationSpec extends AsyncFeatureSpec with GivenWhenThen {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
 }
