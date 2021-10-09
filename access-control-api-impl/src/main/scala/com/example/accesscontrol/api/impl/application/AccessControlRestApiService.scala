@@ -1,8 +1,8 @@
 package com.example.accesscontrol.api.impl.application
 
 import akka.NotUsed
-import com.example.accesscontrol.api.impl.domain.PolicyAdministrationPoint.PolicyCollectionParsingError
-import com.example.accesscontrol.api.impl.domain.{Decision, DomainError, PolicyAdministrationPoint, PolicyCollection, PolicyDecisionPoint, TargetedDecision}
+import com.example.accesscontrol.api.impl.domain.{Decision, DomainError, PolicyDecisionPoint, PolicyRepository, PolicyRetrievalPoint, TargetedDecision}
+import com.example.accesscontrol.api.impl.infrastructure.PolicyRepositoryImpl
 import com.example.accesscontrol.rest.api.{AccessControlError, AccessControlRequest, AccessControlResponse, AccessControlService, AccessControlSuccessResponse, Attribute, ResultedDecision, Target}
 import com.lightbend.lagom.scaladsl.api.ServiceCall
 
@@ -29,10 +29,15 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
   }
 
   /**
+   * Used as implicit parameter for PolicyRetrievalPoint()
+   */
+  implicit val policyRepository: PolicyRepository = new PolicyRepositoryImpl
+
+  /**
    * Used as implicit parameter for PolicyDecisionPoint.makeDecision()
    */
-  implicit val policyCollectionFetch: () => Future[Either[PolicyCollectionParsingError, PolicyCollection]] =
-    PolicyAdministrationPoint.buildPolicyCollection
+  implicit val policyCollectionFetch: PolicyDecisionPoint.PolicyCollectionFetch =
+    PolicyRetrievalPoint().buildPolicyCollection
 
   /**
    * Used for implicit conversion of Array[Target] to Array[PolicyDecisionPoint.Target] -
@@ -75,6 +80,7 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
         case _: Decision.Deny          => "Deny"
         case _: Decision.Permit        => "Permit"
         case _: Decision.Indeterminate => "Indeterminate"
+        case _: Decision.NonApplicable => "NonApplicable"
       },
     )
   }
