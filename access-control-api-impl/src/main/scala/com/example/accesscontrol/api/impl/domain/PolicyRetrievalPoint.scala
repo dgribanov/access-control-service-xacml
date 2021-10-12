@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 final case class PolicyRetrievalPoint()(implicit policyRepository: PolicyRepository) {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
-  case class PolicyCollectionParsingError(errorMessage: String) extends DomainError
+  case class PolicyCollectionParsingError(errorMessage: String) extends DomainException
 
   def buildPolicyCollection(): Future[Either[PolicyCollectionParsingError, PolicyCollection]] = {
     Future {

@@ -39,8 +39,8 @@ sealed trait ExpressionValue[+T] {
 }
 
 object ExpressionValue {
-  type Attribute = PolicyDecisionPoint.Attribute
-  type AttributeValue = PolicyDecisionPoint.AttributeValue
+  type Attribute = PolicyDecisionPointImpl.Attribute
+  type AttributeValue = PolicyDecisionPointImpl.AttributeValue
 
   def apply(paramValue: ExpressionParameterValue)(implicit attributes: Array[Attribute]): ExpressionValue[Any] =
     paramValue match {

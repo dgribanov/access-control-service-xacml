@@ -2,28 +2,17 @@ package com.example.accesscontrol.api.impl.domain
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
+import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint
 
-object PolicyDecisionPoint {
+object PolicyDecisionPointImpl extends PolicyDecisionPoint {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
-  type Target = {
-    val objectType: String
-    val objectId: Int
-    val action: String
-  }
-  type Attribute = {
-    val name: String
-    val value: AttributeValue
-  }
-  type AttributeValue = {
-    val value: Any
-  }
-  type PolicyCollectionFetch = () => Future[Either[DomainError, PolicyCollection]]
+  type PolicyCollectionFetch = () => Future[Either[DomainException, PolicyCollection]]
 
   def makeDecision(
     targets: Array[Target],
     attributes: Array[Attribute]
-  )(implicit policyCollectionFetch: PolicyCollectionFetch): Future[Either[DomainError, Array[TargetedDecision]]] = {
+  )(implicit policyCollectionFetch: PolicyCollectionFetch): Future[Either[DomainException, Array[TargetedDecision]]] = {
     policyCollectionFetch().map({
       case Right(policyCollection) => Right(evaluate(policyCollection)(targets, attributes))
       case Left(error)             => Left(error)
@@ -189,12 +178,12 @@ object Decision {
   }
 }
 
-abstract class TargetedPolicy(val target: PolicyDecisionPoint.Target, val policy: Policy)
+abstract class TargetedPolicy(val target: PolicyDecisionPointImpl.Target, val policy: Policy)
 object TargetedPolicy {
-  def apply(target: PolicyDecisionPoint.Target, policy: Policy): TargetedPolicy = new TargetedPolicy(target, policy) {}
+  def apply(target: PolicyDecisionPointImpl.Target, policy: Policy): TargetedPolicy = new TargetedPolicy(target, policy) {}
 }
 
-abstract class TargetedDecision(val target: PolicyDecisionPoint.Target, val decision: Future[Decision])
+abstract class TargetedDecision(val target: PolicyDecisionPointImpl.Target, val decision: Future[Decision])
 object TargetedDecision {
-  def apply(target: PolicyDecisionPoint.Target, decision: Future[Decision]): TargetedDecision = new TargetedDecision(target, decision) {}
+  def apply(target: PolicyDecisionPointImpl.Target, decision: Future[Decision]): TargetedDecision = new TargetedDecision(target, decision) {}
 }

@@ -2,8 +2,8 @@ package com.example.accesscontrol.api.impl.application
 
 import com.lightbend.lagom.scaladsl.server.LocalServiceLocator
 import com.lightbend.lagom.scaladsl.testkit.ServiceTest
-import com.example.accesscontrol.rest.api.{AccessControlRequest, AccessControlSuccessResponse, AccessControlError, Target}
 
+import com.example.accesscontrol.rest.api.{AccessControlRequest, AccessControlSuccessResponse, AccessControlError, Target}
 import com.example.accesscontrol.api.impl.{BaseAcceptanceSpec, AccessControlApplication}
 import com.example.accesscontrol.rest.api.AccessControlService
 
@@ -23,7 +23,7 @@ class AccessControlRestApiServiceAcceptanceSpec extends BaseAcceptanceSpec {
     Scenario("Хочу проверить пульс у сервиса AccessControl") {
 
       When(">>> делаю запрос на ручку `проверки пульса`")
-      val response = client.hello.invoke()
+      val response = client.healthcheck.invoke()
 
       Then("<<< убеждаюсь, что пульс прощупывается, пациент скорее жив...")
       response map { answer =>

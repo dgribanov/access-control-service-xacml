@@ -7,9 +7,9 @@ import com.lightbend.lagom.scaladsl.api.transport.Method
 trait AccessControlService extends Service {
 
   /**
-   * Example: curl http://localhost:9000/api/access-control/hi
+   * Example: curl http://localhost:9000/healthcheck
    */
-  def hello: ServiceCall[NotUsed, String]
+  def healthcheck: ServiceCall[NotUsed, String]
 
   /**
    * Example: curl -H "Content-Type: application/json" -X POST
@@ -23,7 +23,7 @@ trait AccessControlService extends Service {
     // @formatter:off
     named("access-control")
       .withCalls(
-        restCall(Method.GET, "/api/access-control/hi", hello),
+        restCall(Method.GET, "/healthcheck", healthcheck),
         restCall(Method.POST, "/api/access-control/check/:subject/:id", check _),
       )
       .withAutoAcl(true)

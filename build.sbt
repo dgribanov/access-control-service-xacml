@@ -6,6 +6,7 @@ ThisBuild / scalaVersion := "2.13.0"
 
 val macwire = "com.softwaremill.macwire" %% "macros" % "2.4.1" % "provided"
 val scalaTest = "org.scalatest" %% "scalatest" % "3.2.10" % Test
+val scalaGuice = "net.codingwell" %% "scala-guice" % "5.0.2"
 
 lazy val `access-control` = (project in file("."))
   .aggregate(`access-control-rest-api`, `access-control-api-impl`)
@@ -23,8 +24,10 @@ lazy val `access-control-api-impl` = (project in file("access-control-api-impl")
     libraryDependencies ++= Seq(
       lagomScaladslTestKit,
       macwire,
-      scalaTest
-    )
+      scalaTest,
+      scalaGuice
+    ),
+    //lagomServiceHttpPort := 5005
   )
   .dependsOn(`access-control-rest-api`)
 
