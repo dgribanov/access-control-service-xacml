@@ -2,12 +2,13 @@ package com.example.accesscontrol.api.impl.domain
 
 import play.api.libs.json.{Format, JsError, JsSuccess, Json}
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-final case class PolicyRetrievalPoint()(implicit policyRepository: PolicyRepository) {
+final class PolicyRetrievalPoint @Inject() (policyRepository: PolicyRepository) {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
-  case class PolicyCollectionParsingError(errorMessage: String) extends DomainException
+  case class PolicyCollectionParsingError(errorMessage: String) extends RuntimeException
 
   def buildPolicyCollection(): Future[Either[PolicyCollectionParsingError, PolicyCollection]] = {
     Future {

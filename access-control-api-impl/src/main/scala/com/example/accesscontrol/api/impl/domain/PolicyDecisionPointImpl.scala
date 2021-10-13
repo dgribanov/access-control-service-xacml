@@ -2,18 +2,18 @@ package com.example.accesscontrol.api.impl.domain
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
+import javax.inject.Inject
+
 import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint
 
-object PolicyDecisionPointImpl extends PolicyDecisionPoint {
+final case class PolicyDecisionPointImpl @Inject() (policyRetrievalPoint: PolicyRetrievalPoint) extends PolicyDecisionPoint {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
-  type PolicyCollectionFetch = () => Future[Either[DomainException, PolicyCollection]]
-
   def makeDecision(
-    targets: Array[Target],
-    attributes: Array[Attribute]
-  )(implicit policyCollectionFetch: PolicyCollectionFetch): Future[Either[DomainException, Array[TargetedDecision]]] = {
-    policyCollectionFetch().map({
+    targets: Array[PolicyDecisionPoint.Target],
+    attributes: Array[PolicyDecisionPoint.Attribute]
+  ): Future[Either[RuntimeException, Array[PolicyDecisionPoint.TargetedDecision]]] = {
+    policyRetrievalPoint.buildPolicyCollection().map({
       case Right(policyCollection) => Right(evaluate(policyCollection)(targets, attributes))
       case Left(error)             => Left(error)
     })
@@ -21,14 +21,14 @@ object PolicyDecisionPointImpl extends PolicyDecisionPoint {
 
   private def evaluate(
     policyCollection: PolicyCollection
-  )(implicit targets: Array[Target], attributes: Array[Attribute]): Array[TargetedDecision] = {
+  )(implicit targets: Array[PolicyDecisionPoint.Target], attributes: Array[PolicyDecisionPoint.Attribute]): Array[PolicyDecisionPoint.TargetedDecision] = {
     for {
       target <- targets
       targetedDecision = computeTargetedDecision(target, policyCollection)
     } yield targetedDecision
   }
 
-  private def fetchTargetedPolicy(checkTarget: Target, policyCollection: PolicyCollection): Option[TargetedPolicy] = {
+  private def fetchTargetedPolicy(checkTarget: PolicyDecisionPoint.Target, policyCollection: PolicyCollection): Option[TargetedPolicy] = {
     def targetMatcher(obj: {val target: TargetType}): Boolean = {
       obj.target match {
         case ObjectTypeTarget(value: String) => value == checkTarget.objectType
@@ -51,9 +51,9 @@ object PolicyDecisionPointImpl extends PolicyDecisionPoint {
   }
 
   private def computeTargetedDecision(
-    target: Target,
+    target: PolicyDecisionPoint.Target,
     policyCollection: PolicyCollection
-  )(implicit attributes: Array[Attribute]): TargetedDecision = {
+  )(implicit attributes: Array[PolicyDecisionPoint.Attribute]): TargetedDecision = {
     val targetedPolicy = fetchTargetedPolicy(target, policyCollection)
     targetedPolicy match {
       case None     => TargetedDecision(target, Future { Decision.NonApplicable() })
@@ -61,7 +61,7 @@ object PolicyDecisionPointImpl extends PolicyDecisionPoint {
     }
   }
 
-  private def computeDecisions(rules: Array[Rule])(implicit attributes: Array[Attribute]): Array[Future[Decision]] = {
+  private def computeDecisions(rules: Array[Rule])(implicit attributes: Array[PolicyDecisionPoint.Attribute]): Array[Future[Decision]] = {
     for {
       rule <- rules
       decision = computeDecision(
@@ -81,7 +81,7 @@ object PolicyDecisionPointImpl extends PolicyDecisionPoint {
     }
   }
 
-  private def checkCondition(condition: Condition)(implicit attributes: Array[Attribute]): Future[Option[Boolean]] = {
+  private def checkCondition(condition: Condition)(implicit attributes: Array[PolicyDecisionPoint.Attribute]): Future[Option[Boolean]] = {
     condition match {
       case CompareCondition(op, lOp, rOp)         => compareOperation(op, ExpressionValue(lOp), ExpressionValue(rOp))
       case CompositeCondition(pred, lCond, rCond) => composeConditions(pred, lCond, rCond)
@@ -98,7 +98,7 @@ object PolicyDecisionPointImpl extends PolicyDecisionPoint {
     }
   }
 
-  private def composeConditions(predicate: String, lCond: Condition, rCond: Condition)(implicit attributes: Array[Attribute]): Future[Option[Boolean]] = {
+  private def composeConditions(predicate: String, lCond: Condition, rCond: Condition)(implicit attributes: Array[PolicyDecisionPoint.Attribute]): Future[Option[Boolean]] = {
     predicate match {
       case "and" => checkCondition(lCond) zip checkCondition(rCond) map {
         case (Some(lResult), Some(rResult)) => Some(lResult && rResult)
@@ -178,12 +178,12 @@ object Decision {
   }
 }
 
-abstract class TargetedPolicy(val target: PolicyDecisionPointImpl.Target, val policy: Policy)
+abstract class TargetedPolicy(val target: PolicyDecisionPoint.Target, val policy: Policy)
 object TargetedPolicy {
-  def apply(target: PolicyDecisionPointImpl.Target, policy: Policy): TargetedPolicy = new TargetedPolicy(target, policy) {}
+  def apply(target: PolicyDecisionPoint.Target, policy: Policy): TargetedPolicy = new TargetedPolicy(target, policy) {}
 }
 
-abstract class TargetedDecision(val target: PolicyDecisionPointImpl.Target, val decision: Future[Decision])
+abstract class TargetedDecision(val target: PolicyDecisionPoint.Target, val decision: Future[Decision])
 object TargetedDecision {
-  def apply(target: PolicyDecisionPointImpl.Target, decision: Future[Decision]): TargetedDecision = new TargetedDecision(target, decision) {}
+  def apply(target: PolicyDecisionPoint.Target, decision: Future[Decision]): TargetedDecision = new TargetedDecision(target, decision) {}
 }

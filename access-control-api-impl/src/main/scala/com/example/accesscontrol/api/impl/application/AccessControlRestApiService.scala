@@ -6,14 +6,15 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
-import com.example.accesscontrol.api.impl.domain.{Decision, DomainException, PolicyDecisionPointImpl, PolicyRepository, PolicyRetrievalPoint, TargetedDecision}
-import com.example.accesscontrol.api.impl.infrastructure.{PolicyRepositoryImpl, ServiceInjectorFactory}
+import com.example.accesscontrol.api.impl.domain.Decision
+import com.example.accesscontrol.api.impl.infrastructure.ServiceInjectorFactory
 import com.example.accesscontrol.rest.api.{AccessControlError, AccessControlRequest, AccessControlResponse, AccessControlService, AccessControlSuccessResponse, Attribute, ResultedDecision, Target}
 
 /**
  * Implementation of the AccessControlService.
  */
 class AccessControlRestApiService()(implicit ec: ExecutionContext) extends AccessControlService {
+  val policyDecisionPoint: PolicyDecisionPoint = injectPolicyDecisionPoint()
 
   override def healthcheck: ServiceCall[NotUsed, String] = ServiceCall {
     _ =>
@@ -22,11 +23,6 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
 
   override def check(subject: String, id: String): ServiceCall[AccessControlRequest, AccessControlResponse] = ServiceCall {
     request => {
-      import net.codingwell.scalaguice.InjectorExtensions._
-
-      val injector = ServiceInjectorFactory.buildServiceInjector()
-      val policyDecisionPoint = injector.instance[PolicyDecisionPoint]
-
       policyDecisionPoint
         .makeDecision(request.targets, request.attributes)
         .map[AccessControlResponse](this.convertToResponse)
@@ -34,23 +30,12 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
   }
 
   /**
-   * Used as implicit parameter for PolicyRetrievalPoint()
-   */
-  implicit val policyRepository: PolicyRepository = new PolicyRepositoryImpl
-
-  /**
-   * Used as implicit parameter for PolicyDecisionPoint.makeDecision()
-   */
-  implicit val policyCollectionFetch: PolicyDecisionPointImpl.PolicyCollectionFetch =
-    PolicyRetrievalPoint().buildPolicyCollection
-
-  /**
    * Used for implicit conversion of Array[Target] to Array[PolicyDecisionPointImpl.Target] -
    * look at first parameter of PolicyDecisionPointImpl.makeDecision()
    */
   implicit def convertRequestTargetsToDomainTargets(
      requestTargets: Array[Target]
-  ): Array[PolicyDecisionPointImpl.Target] = requestTargets.asInstanceOf[Array[PolicyDecisionPointImpl.Target]]
+  ): Array[PolicyDecisionPoint.Target] = requestTargets.asInstanceOf[Array[PolicyDecisionPoint.Target]]
 
   /**
    * Used for implicit conversion of Array[Attribute] to Array[PolicyDecisionPointImpl.Attribute] -
@@ -58,23 +43,31 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
    */
   implicit def convertRequestAttributesToDomainAttributes(
     requestAttributes: Array[Attribute]
-  ): Array[PolicyDecisionPointImpl.Attribute] = requestAttributes.asInstanceOf[Array[PolicyDecisionPointImpl.Attribute]]
+  ): Array[PolicyDecisionPoint.Attribute] = requestAttributes.asInstanceOf[Array[PolicyDecisionPoint.Attribute]]
 
-  private def convertToResponse(targetedDecisions: Either[DomainException, Array[TargetedDecision]]): AccessControlResponse = {
+  private def injectPolicyDecisionPoint(): PolicyDecisionPoint = {
+    import net.codingwell.scalaguice.InjectorExtensions._
+    import com.google.inject.Injector
+
+    val injector: Injector = ServiceInjectorFactory.buildServiceInjector()
+    injector.instance[PolicyDecisionPoint]
+  }
+
+  private def convertToResponse(targetedDecisions: Either[RuntimeException, Array[PolicyDecisionPoint.TargetedDecision]]): AccessControlResponse = {
     targetedDecisions match {
       case Right(targetedDecisions) => toSuccessResponse(targetedDecisions)
       case Left(error)              => toError(error)
     }
   }
 
-  private def toSuccessResponse(targetedDecisions: Array[TargetedDecision]): AccessControlSuccessResponse = {
+  private def toSuccessResponse(targetedDecisions: Array[PolicyDecisionPoint.TargetedDecision]): AccessControlSuccessResponse = {
     val decisions = targetedDecisions map createResultedDecision
     AccessControlSuccessResponse(decisions)
   }
 
-  private def toError(error: DomainException): AccessControlError = AccessControlError(error.getMessage)
+  private def toError(error: RuntimeException): AccessControlError = AccessControlError(error.getMessage)
 
-  private def createResultedDecision(targetedDecision: TargetedDecision): ResultedDecision = {
+  private def createResultedDecision(targetedDecision: PolicyDecisionPoint.TargetedDecision): ResultedDecision = {
     // block main thread while decision is completed
     val decision = Await.result(targetedDecision.decision, 10.seconds)
 
