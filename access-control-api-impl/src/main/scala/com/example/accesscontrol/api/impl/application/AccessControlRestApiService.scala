@@ -7,14 +7,14 @@ import scala.concurrent.duration._
 import scala.language.implicitConversions
 
 import com.example.accesscontrol.api.impl.domain.Decision
-import com.example.accesscontrol.api.impl.infrastructure.ServiceInjectorFactory
+import com.example.accesscontrol.api.impl.infrastructure.ServiceInjector
 import com.example.accesscontrol.rest.api.{AccessControlError, AccessControlRequest, AccessControlResponse, AccessControlService, AccessControlSuccessResponse, Attribute, ResultedDecision, Target}
 
 /**
  * Implementation of the AccessControlService.
  */
 class AccessControlRestApiService()(implicit ec: ExecutionContext) extends AccessControlService {
-  val policyDecisionPoint: PolicyDecisionPoint = injectPolicyDecisionPoint()
+  val policyDecisionPoint: PolicyDecisionPoint = ServiceInjector.inject[PolicyDecisionPoint]
 
   override def healthcheck: ServiceCall[NotUsed, String] = ServiceCall {
     _ =>
@@ -44,14 +44,6 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
   implicit def convertRequestAttributesToDomainAttributes(
     requestAttributes: Array[Attribute]
   ): Array[PolicyDecisionPoint.Attribute] = requestAttributes.asInstanceOf[Array[PolicyDecisionPoint.Attribute]]
-
-  private def injectPolicyDecisionPoint(): PolicyDecisionPoint = {
-    import net.codingwell.scalaguice.InjectorExtensions._
-    import com.google.inject.Injector
-
-    val injector: Injector = ServiceInjectorFactory.buildServiceInjector()
-    injector.instance[PolicyDecisionPoint]
-  }
 
   private def convertToResponse(targetedDecisions: Either[RuntimeException, Array[PolicyDecisionPoint.TargetedDecision]]): AccessControlResponse = {
     targetedDecisions match {
