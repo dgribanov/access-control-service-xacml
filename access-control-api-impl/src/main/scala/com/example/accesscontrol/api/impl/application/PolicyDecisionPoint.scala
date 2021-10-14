@@ -1,15 +1,7 @@
 package com.example.accesscontrol.api.impl.application
 
-//import com.example.accesscontrol.api.impl.domain.Decision
-
 import scala.concurrent.Future
 
-trait PolicyDecisionPoint {
-  def makeDecision(
-    targets: Array[PolicyDecisionPoint.Target],
-    attributes: Array[PolicyDecisionPoint.Attribute]
-  ): Future[Either[RuntimeException, Array[PolicyDecisionPoint.TargetedDecision]]]
-}
 object PolicyDecisionPoint {
   type Target = {
     val objectType: String
@@ -27,6 +19,14 @@ object PolicyDecisionPoint {
     val target: Target
     val decision: Future[Decision]
   }
+}
+trait PolicyDecisionPoint {
+  import PolicyDecisionPoint._
+
+  def makeDecision(
+    targets: Array[Target],
+    attributes: Array[Attribute]
+  ): Future[Either[RuntimeException, Array[TargetedDecision]]]
 }
 
 trait Decision

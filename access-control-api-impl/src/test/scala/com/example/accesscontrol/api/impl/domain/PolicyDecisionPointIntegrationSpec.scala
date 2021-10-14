@@ -171,10 +171,10 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       }
     }
     }).flatten map { decision => assert(decision match {
-      case _: Decision.Deny          => deny
-      case _: Decision.Permit        => permit
-      case _: Decision.Indeterminate => indeterminate
-      case _: Decision.NonApplicable => nonApplicable
+      case _: Decisions.Deny          => deny
+      case _: Decisions.Permit        => permit
+      case _: Decisions.Indeterminate => indeterminate
+      case _: Decisions.NonApplicable => nonApplicable
     })}
   }
 

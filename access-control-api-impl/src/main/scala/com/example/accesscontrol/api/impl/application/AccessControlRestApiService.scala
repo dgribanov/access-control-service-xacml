@@ -5,9 +5,7 @@ import com.lightbend.lagom.scaladsl.api.ServiceCall
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.implicitConversions
-import com.google.inject.Module
 
-import com.example.accesscontrol.api.impl.AccessControlModule
 import com.example.accesscontrol.api.impl.ServiceInjector
 import com.example.accesscontrol.rest.api.{
   AccessControlError,
@@ -23,8 +21,8 @@ import com.example.accesscontrol.rest.api.{
 /**
  * Implementation of the AccessControlService.
  */
-class AccessControlRestApiService()(implicit ec: ExecutionContext, module: Module = new AccessControlModule) extends AccessControlService {
-  val policyDecisionPoint: PolicyDecisionPoint = ServiceInjector.inject[PolicyDecisionPoint]
+class AccessControlRestApiService()(implicit ec: ExecutionContext, serviceInjector: ServiceInjector) extends AccessControlService {
+  val policyDecisionPoint: PolicyDecisionPoint = serviceInjector.inject[PolicyDecisionPoint]
 
   override def healthcheck: ServiceCall[NotUsed, String] = ServiceCall {
     _ =>
