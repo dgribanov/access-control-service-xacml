@@ -5,6 +5,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.Inject
 
 import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint
+import com.example.accesscontrol.api.impl.application.Decision
 
 final case class PolicyDecisionPointImpl @Inject() (policyRetrievalPoint: PolicyRetrievalPoint) extends PolicyDecisionPoint {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
@@ -154,12 +155,20 @@ final case class PolicyDecisionPointImpl @Inject() (policyRetrievalPoint: Policy
   }
 }
 
-sealed trait Decision
+//sealed trait Decision
 object Decision {
-  abstract case class Deny() extends Decision
-  abstract case class Permit() extends Decision
-  abstract case class Indeterminate() extends Decision
-  abstract case class NonApplicable() extends Decision
+  abstract case class Deny() extends Decision {
+    override def toString: String = "Deny"
+  }
+  abstract case class Permit() extends Decision {
+    override def toString: String = "Permit"
+  }
+  abstract case class Indeterminate() extends Decision {
+    override def toString: String = "Indeterminate"
+  }
+  abstract case class NonApplicable() extends Decision {
+    override def toString: String = "NonApplicable"
+  }
 
   object Deny {
     def apply(): Deny = new Decision.Deny {}

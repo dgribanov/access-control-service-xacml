@@ -1,6 +1,6 @@
 package com.example.accesscontrol.api.impl.application
 
-import com.example.accesscontrol.api.impl.domain.Decision
+//import com.example.accesscontrol.api.impl.domain.Decision
 
 import scala.concurrent.Future
 
@@ -28,3 +28,5 @@ object PolicyDecisionPoint {
     val decision: Future[Decision]
   }
 }
+
+trait Decision

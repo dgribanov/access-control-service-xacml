@@ -6,7 +6,6 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
-import com.example.accesscontrol.api.impl.domain.Decision
 import com.example.accesscontrol.api.impl.infrastructure.ServiceInjector
 import com.example.accesscontrol.rest.api.{AccessControlError, AccessControlRequest, AccessControlResponse, AccessControlService, AccessControlSuccessResponse, Attribute, ResultedDecision, Target}
 
@@ -66,12 +65,7 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext) extends Acces
     ResultedDecision(
       targetedDecision.target.objectType,
       targetedDecision.target.action,
-      decision match {
-        case _: Decision.Deny          => "Deny"
-        case _: Decision.Permit        => "Permit"
-        case _: Decision.Indeterminate => "Indeterminate"
-        case _: Decision.NonApplicable => "NonApplicable"
-      },
+      decision.toString,
     )
   }
 }
