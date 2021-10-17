@@ -34,7 +34,7 @@ object PolicySet {
   implicit val format: Format[PolicySet] = Json.format[PolicySet]
 }
 
-case class PolicySet(target: TargetType, combiningAlgorithm: CombiningAlgorithm, policies: Array[Policy]) extends WithTargetType
+case class PolicySet(target: TargetType, combiningAlgorithm: CombiningAlgorithms.Algorithm, policies: Array[Policy]) extends WithTargetType
 
 sealed trait TargetType
 case class ObjectTypeTarget(value: String) extends TargetType
@@ -95,55 +95,19 @@ object TargetType {
   )
 }
 
-sealed trait CombiningAlgorithm
-case class DenyOverride(algorithm: String) extends CombiningAlgorithm
-case class PermitOverride(algorithm: String) extends CombiningAlgorithm
+object CombiningAlgorithms extends Enumeration {
+  type Algorithm = Value
 
-object DenyOverride {
-  implicit val format: Format[DenyOverride] = Json.format[DenyOverride]
-}
+  val DenyOverride, PermitOverride: Algorithm = Value
 
-object PermitOverride {
-  implicit val format: Format[PermitOverride] = Json.format[PermitOverride]
-}
-
-object CombiningAlgorithm {
-  import play.api.libs.json.{Reads, Writes, JsPath, JsError, JsObject, JsString}
-
-  implicit val format: Format[CombiningAlgorithm] = Format[CombiningAlgorithm] (
-    Reads { js =>
-      // use the _type field to determine how to deserialize
-      val valueType = (JsPath \ "algorithm").read[String].reads(js)
-      valueType.fold(
-        _ => JsError("algorithm undefined or incorrect"),
-        {
-          case "deny-override"   => JsPath.read[DenyOverride].reads(js)
-          case "permit-override" => JsPath.read[PermitOverride].reads(js)
-        }
-      )
-    },
-    Writes {
-      case _: DenyOverride =>
-        JsObject(
-          Seq(
-            "algorithm" -> JsString("deny-override"),
-          )
-        )
-      case _: PermitOverride =>
-        JsObject(
-          Seq(
-            "algorithm" -> JsString("permit-override"),
-          )
-        )
-    }
-  )
+  implicit val format: Format[Algorithm] = Json.formatEnum(this)
 }
 
 object Policy {
   implicit val format: Format[Policy] = Json.format[Policy]
 }
 
-case class Policy(target: TargetType, combiningAlgorithm: CombiningAlgorithm, rules: Array[Rule]) extends WithTargetType
+case class Policy(target: TargetType, combiningAlgorithm: CombiningAlgorithms.Algorithm, rules: Array[Rule]) extends WithTargetType
 
 object Rule {
   implicit val format: Format[Rule] = Json.format[Rule]
@@ -152,8 +116,8 @@ object Rule {
 case class Rule(target: TargetType, condition: Condition, positiveEffect: PositiveEffect, negativeEffect: NegativeEffect)
 
 sealed trait Condition
-case class CompareCondition(operation: String, leftOperand: ExpressionParameterValue, rightOperand: ExpressionParameterValue) extends Condition
-case class CompositeCondition(predicate: String, leftCondition: Condition, rightCondition: Condition) extends Condition
+case class CompareCondition(operation: Operations.Operation, leftOperand: ExpressionParameterValue, rightOperand: ExpressionParameterValue) extends Condition
+case class CompositeCondition(predicate: Predicates.Predicate, leftCondition: Condition, rightCondition: Condition) extends Condition
 
 object CompareCondition {
   implicit val format: Format[CompareCondition] = Json.format[CompareCondition]
@@ -201,9 +165,25 @@ object Condition {
   )
 }
 
+object Operations extends Enumeration {
+  type Operation = Value
+
+  val eq, lt, lte, gt, gte: Operation = Value
+
+  implicit val format: Format[Operation] = Json.formatEnum(this)
+}
+
+object Predicates extends Enumeration {
+  type Predicate = Value
+
+  val AND, OR: Predicate = Value
+
+  implicit val format: Format[Predicate] = Json.formatEnum(this)
+}
+
 sealed trait Effect
-case class PositiveEffect(decision: String) extends Effect
-case class NegativeEffect(decision: String) extends Effect
+case class PositiveEffect(decision: EffectDecisions.Decision) extends Effect
+case class NegativeEffect(decision: EffectDecisions.Decision) extends Effect
 
 object PositiveEffect {
   implicit val format: Format[PositiveEffect] = Json.format[PositiveEffect]
@@ -211,6 +191,14 @@ object PositiveEffect {
 
 object NegativeEffect {
   implicit val format: Format[NegativeEffect] = Json.format[NegativeEffect]
+}
+
+object EffectDecisions extends Enumeration {
+  type Decision = Value
+
+  val Deny, Permit, Indeterminate, NonApplicable: Decision = Value
+
+  implicit val format: Format[Decision] = Json.formatEnum(this)
 }
 
 sealed trait ExpressionParameterValue

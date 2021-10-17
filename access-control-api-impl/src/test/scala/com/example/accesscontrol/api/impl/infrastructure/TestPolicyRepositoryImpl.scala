@@ -13,20 +13,14 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
             "_type": "ObjectTypeTarget",
             "value": "bicycle"
           },
-          "combiningAlgorithm": {
-            "_type": "CombiningAlgorithm",
-            "algorithm": "deny-override"
-          },
+          "combiningAlgorithm": "DenyOverride",
           "policies": [{
             "_type": "Policy",
             "target": {
               "_type": "ActionTypeTarget",
               "value": "ride"
             },
-            "combiningAlgorithm": {
-              "_type": "CombiningAlgorithm",
-              "algorithm": "deny-override"
-            },
+            "combiningAlgorithm": "DenyOverride",
             "rules": [{
               "_type": "Rule",
               "target": {
@@ -61,10 +55,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
               "_type": "ActionTypeTarget",
               "value": "rent"
             },
-            "combiningAlgorithm": {
-              "_type": "CombiningAlgorithm",
-              "algorithm": "permit-override"
-            },
+            "combiningAlgorithm": "PermitOverride",
             "rules": [{
               "_type": "Rule",
               "target": {
@@ -81,7 +72,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
               },
               "condition": {
                 "_type": "CompositeCondition",
-                "predicate": "and",
+                "predicate": "AND",
                 "leftCondition": {
                   "_type": "CompareCondition",
                   "operation": "eq",
@@ -96,7 +87,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                 },
                 "rightCondition": {
                   "_type": "CompositeCondition",
-                  "predicate": "or",
+                  "predicate": "OR",
                   "leftCondition": {
                     "_type": "CompareCondition",
                     "operation": "gte",
@@ -132,20 +123,14 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
             "_type": "ObjectTypeTarget",
             "value": "skateboard"
           },
-          "combiningAlgorithm": {
-            "_type": "CombiningAlgorithm",
-            "algorithm": "deny-override"
-          },
+          "combiningAlgorithm": "DenyOverride",
           "policies": [{
             "_type": "Policy",
             "target": {
               "_type": "ActionTypeTarget",
               "value": "ride"
             },
-            "combiningAlgorithm": {
-              "_type": "CombiningAlgorithm",
-              "algorithm": "deny-override"
-            },
+            "combiningAlgorithm": "DenyOverride",
             "rules": [{
               "_type": "Rule",
               "target": {
@@ -208,20 +193,14 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
             "_type": "ObjectTypeTarget",
             "value": "scooter"
           },
-          "combiningAlgorithm": {
-            "_type": "CombiningAlgorithm",
-            "algorithm": "permit-override"
-          },
+          "combiningAlgorithm": "PermitOverride",
           "policies": [{
             "_type": "Policy",
             "target": {
               "_type": "ActionTypeTarget",
               "value": "ride"
             },
-            "combiningAlgorithm": {
-              "_type": "CombiningAlgorithm",
-              "algorithm": "permit-override"
-            },
+            "combiningAlgorithm": "PermitOverride",
             "rules": [{
               "_type": "Rule",
               "target": {

@@ -15,6 +15,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   val policyRepository: PolicyRepository = new TestPolicyRepositoryImpl
   val policyRetrievalPoint: PolicyRetrievalPoint = new PolicyRetrievalPoint(policyRepository)
+  val targetedPolicyFactory: TargetedPolicyFactory = new TargetedPolicyFactory
 
   info("Как сервис, управляющий продажей и арендой велосипедов, самокатов и скейтов, я хочу проверить доступ пользователя к основным действиям с моими товарами.")
 
@@ -26,12 +27,12 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       val attributes = Array(new Attribute("permissionToRideBicycle", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute])
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
 
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
 
-      Then("<<< убеждаемся, что проверка доступа НЕ ПРИМЕНИМА для объекта `танк`, МЫ МИРНЫЕ ЛЮДИ, У НАС НЕТ ТАНКОВ! (пока нет)")
+      Then("<<< убеждаемся, что проверка доступа НЕ ПРИМЕНИМА для объекта `танк`, МЫ МИРНЫЕ ЛЮДИ, У НАС НЕТ ТАНКОВ!")
       assertDecision(decisions, nonApplicable = true)
     }
   }
@@ -44,7 +45,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       val attributes = Array(new Attribute("permissionToRideBicycle", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute])
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
 
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
@@ -60,7 +61,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       val attributes = Array(new Attribute("permissionToRideBicycle", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute])
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
 
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
@@ -82,7 +83,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
 
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
@@ -104,7 +105,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
 
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
@@ -126,7 +127,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
 
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
@@ -148,7 +149,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
 
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]])}
@@ -158,6 +159,149 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
   }
 
+  Feature("(2) Скейты:") {
+    Scenario("(2.1) Пользователь #1 хочет покататься на скейте #1") {
+      val targets = Array(new Target("skateboard", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+
+      Given("** у пользователя ЕСТЬ право кататься на скейте")
+      Given("** пользователь будет кататься на УЛИЦЕ")
+      val attributes = Array(
+        new Attribute("permissionToRideSkateboard", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new Attribute("placeType", new AttributeValue("street")).asInstanceOf[PolicyDecisionPoint.Attribute],
+      )
+
+      When(">>> запрашиваем проверку доступа")
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
+
+      Then("<<< видим, что проверка доступа удалась, ошибок нет")
+      decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
+
+      Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
+      assertDecision(decisions, permit = true)
+    }
+
+    Scenario("(2.2) Пользователь #2 хочет покататься на скейте #1") {
+      val targets = Array(new Target("skateboard", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+
+      Given("** у пользователя НЕТ права кататься на скейте")
+      Given("** пользователь будет кататься на УЛИЦЕ")
+      val attributes = Array(
+        new Attribute("permissionToRideSkateboard", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new Attribute("placeType", new AttributeValue("street")).asInstanceOf[PolicyDecisionPoint.Attribute],
+      )
+
+      When(">>> запрашиваем проверку доступа")
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
+
+      Then("<<< видим, что проверка доступа удалась, ошибок нет")
+      decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
+
+      Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
+      assertDecision(decisions, deny = true)
+    }
+
+    Scenario("(2.3) Пользователь #1 хочет покататься на скейте #2") {
+      val targets = Array(new Target("skateboard", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+
+      Given("** у пользователя ЕСТЬ право кататься на скейте")
+      Given("** пользователь будет кататься в ОФИСЕ")
+      val attributes = Array(
+        new Attribute("permissionToRideSkateboard", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new Attribute("placeType", new AttributeValue("office")).asInstanceOf[PolicyDecisionPoint.Attribute],
+      )
+
+      When(">>> запрашиваем проверку доступа")
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
+
+      Then("<<< видим, что проверка доступа удалась, ошибок нет")
+      decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
+
+      Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
+      assertDecision(decisions, deny = true)
+    }
+  }
+
+  Feature("(3) Самокаты:") {
+    Scenario("(3.1) Пользователь #1 хочет покататься на самокате #1") {
+      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+
+      Given("** у пользователя ЕСТЬ право кататься на скейте")
+      Given("** профессия пользователя - КУРЬЕР")
+      val attributes = Array(
+        new Attribute("permissionToRideScooter", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new Attribute("profession", new AttributeValue("courier")).asInstanceOf[PolicyDecisionPoint.Attribute],
+      )
+
+      When(">>> запрашиваем проверку доступа")
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
+
+      Then("<<< видим, что проверка доступа удалась, ошибок нет")
+      decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
+
+      Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
+      assertDecision(decisions, permit = true)
+    }
+
+    Scenario("(3.2) Пользователь #2 хочет покататься на самокате #1") {
+      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+
+      Given("** у пользователя ЕСТЬ право кататься на скейте")
+      Given("** профессия пользователя - ПРОГРАММИСТ")
+      val attributes = Array(
+        new Attribute("permissionToRideScooter", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new Attribute("profession", new AttributeValue("programmer")).asInstanceOf[PolicyDecisionPoint.Attribute],
+      )
+
+      When(">>> запрашиваем проверку доступа")
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
+
+      Then("<<< видим, что проверка доступа удалась, ошибок нет")
+      decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
+
+      Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
+      assertDecision(decisions, permit = true)
+    }
+
+    Scenario("(3.3) Пользователь #3 хочет покататься на самокате #1") {
+      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+
+      Given("** у пользователя НЕТ права кататься на скейте")
+      Given("** профессия пользователя - КУРЬЕР")
+      val attributes = Array(
+        new Attribute("permissionToRideScooter", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new Attribute("profession", new AttributeValue("courier")).asInstanceOf[PolicyDecisionPoint.Attribute],
+      )
+
+      When(">>> запрашиваем проверку доступа")
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
+
+      Then("<<< видим, что проверка доступа удалась, ошибок нет")
+      decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
+
+      Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
+      assertDecision(decisions, permit = true)
+    }
+
+    Scenario("(3.4) Пользователь #4 хочет покататься на самокате #1") {
+      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+
+      Given("** у пользователя НЕТ права кататься на скейте")
+      Given("** профессия пользователя - ПРОГРАММИСТ")
+      val attributes = Array(
+        new Attribute("permissionToRideScooter", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new Attribute("profession", new AttributeValue("programmer")).asInstanceOf[PolicyDecisionPoint.Attribute],
+      )
+
+      When(">>> запрашиваем проверку доступа")
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
+
+      Then("<<< видим, что проверка доступа удалась, ошибок нет")
+      decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
+
+      Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
+      assertDecision(decisions, deny = true)
+    }
+  }
   private def assertDecision(
     decisions: Future[Either[RuntimeException, Array[PolicyDecisionPoint.TargetedDecision]]],
     deny: Boolean = false,
