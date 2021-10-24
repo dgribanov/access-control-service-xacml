@@ -1,15 +1,14 @@
 package com.example.accesscontrol.api.impl.domain
 
-import com.example.accesscontrol.api.impl.infrastructure.TestPolicyRepositoryImpl
+import com.example.accesscontrol.api.impl.data.TestPolicyRepositoryImpl
 import com.example.accesscontrol.api.impl.BaseIntegrationSpec
 import org.scalatest.Assertion
-import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint
 
 import scala.concurrent.Future
 
-class Target (val objectType: String, val objectId: Int, val action: String)
-class Attribute (val name: String, val value: AttributeValue)
-class AttributeValue (val value: Any)
+class TestTarget (val objectType: String, val objectId: Int, val action: String) extends Target
+class TestAttribute (val name: String, val value: AttributeValue) extends Attribute
+class TestAttributeValue (val value: Any) extends AttributeValue
 
 class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
@@ -21,10 +20,10 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   Feature("(0) Танки:") {
     Scenario("(0.1) Пользователь #1 хочет покататься на танке #1") {
-      val targets = Array(new Target("tank", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("tank", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право кататься на танке (он танкист)")
-      val attributes = Array(new Attribute("permissionToRideBicycle", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute])
+      val attributes = Array(new TestAttribute("permissionToRideBicycle", new TestAttributeValue(true)).asInstanceOf[Attribute])
 
       When(">>> запрашиваем проверку доступа")
       val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
@@ -39,10 +38,10 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   Feature("(1) Велосипеды:") {
     Scenario("(1.1) Пользователь #1 хочет покататься на велосипеде #1") {
-      val targets = Array(new Target("bicycle", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("bicycle", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право кататься на велосипеде")
-      val attributes = Array(new Attribute("permissionToRideBicycle", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute])
+      val attributes = Array(new TestAttribute("permissionToRideBicycle", new TestAttributeValue(true)).asInstanceOf[Attribute])
 
       When(">>> запрашиваем проверку доступа")
       val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
@@ -55,10 +54,10 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(1.2) Пользователь #2 хочет покататься на велосипеде #1") {
-      val targets = Array(new Target("bicycle", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("bicycle", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя НЕТ права кататься на велосипеде")
-      val attributes = Array(new Attribute("permissionToRideBicycle", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute])
+      val attributes = Array(new TestAttribute("permissionToRideBicycle", new TestAttributeValue(false)).asInstanceOf[Attribute])
 
       When(">>> запрашиваем проверку доступа")
       val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
@@ -71,15 +70,15 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(1.3) Пользователь #3 хочет арендовать велосипед #1") {
-      val targets = Array(new Target("bicycle", 1, "rent").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("bicycle", 1, "rent").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право арендовать велосипед")
       Given("** пользователю НЕ ИСПОЛНИЛОСЬ 18 лет")
       Given("** пользователь хочет арендовать ТРЁХКОЛЁСНЫЙ велосипед")
       val attributes = Array(
-        new Attribute("permissionToRentBicycle", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("personAge", new AttributeValue(17)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("bicycleType", new AttributeValue("tricycle")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRentBicycle", new TestAttributeValue(true)).asInstanceOf[Attribute],
+        new TestAttribute("personAge", new TestAttributeValue(17)).asInstanceOf[Attribute],
+        new TestAttribute("bicycleType", new TestAttributeValue("tricycle")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -93,15 +92,15 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(1.4) Пользователь #3 хочет арендовать велосипед #2") {
-      val targets = Array(new Target("bicycle", 1, "rent").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("bicycle", 1, "rent").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право арендовать велосипед")
       Given("** пользователю НЕ ИСПОЛНИЛОСЬ 18 лет")
       Given("** пользователь хочет арендовать ДВУХКОЛЁСНЫЙ велосипед")
       val attributes = Array(
-        new Attribute("permissionToRentBicycle", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("personAge", new AttributeValue(17)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("bicycleType", new AttributeValue("two-wheeled")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRentBicycle", new TestAttributeValue(true)).asInstanceOf[Attribute],
+        new TestAttribute("personAge", new TestAttributeValue(17)).asInstanceOf[Attribute],
+        new TestAttribute("bicycleType", new TestAttributeValue("two-wheeled")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -115,15 +114,15 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(1.5) Пользователь #4 хочет арендовать велосипед #3") {
-      val targets = Array(new Target("bicycle", 1, "rent").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("bicycle", 1, "rent").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право арендовать велосипед")
       Given("** пользователю ИСПОЛНИЛОСЬ 18 лет")
       Given("** пользователь хочет арендовать ОДНОКОЛЁСНЫЙ велосипед")
       val attributes = Array(
-        new Attribute("permissionToRentBicycle", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("personAge", new AttributeValue(18)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("bicycleType", new AttributeValue("unicycle")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRentBicycle", new TestAttributeValue(true)).asInstanceOf[Attribute],
+        new TestAttribute("personAge", new TestAttributeValue(18)).asInstanceOf[Attribute],
+        new TestAttribute("bicycleType", new TestAttributeValue("unicycle")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -137,15 +136,15 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(1.6) Пользователь #5 хочет арендовать велосипед #1") {
-      val targets = Array(new Target("bicycle", 1, "rent").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("bicycle", 1, "rent").asInstanceOf[Target])
 
       Given("** у пользователя НЕТ ПРАВА арендовать велосипед")
       Given("** пользователю ИСПОЛНИЛОСЬ 18 лет")
       Given("** пользователь хочет арендовать ТРЁХКОЛЁСНЫЙ велосипед")
       val attributes = Array(
-        new Attribute("permissionToRentBicycle", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("personAge", new AttributeValue(18)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("bicycleType", new AttributeValue("tricycle")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRentBicycle", new TestAttributeValue(false)).asInstanceOf[Attribute],
+        new TestAttribute("personAge", new TestAttributeValue(18)).asInstanceOf[Attribute],
+        new TestAttribute("bicycleType", new TestAttributeValue("tricycle")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -161,13 +160,13 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   Feature("(2) Скейты:") {
     Scenario("(2.1) Пользователь #1 хочет покататься на скейте #1") {
-      val targets = Array(new Target("skateboard", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("skateboard", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право кататься на скейте")
       Given("** пользователь будет кататься на УЛИЦЕ")
       val attributes = Array(
-        new Attribute("permissionToRideSkateboard", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("placeType", new AttributeValue("street")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRideSkateboard", new TestAttributeValue(true)).asInstanceOf[Attribute],
+        new TestAttribute("placeType", new TestAttributeValue("street")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -181,13 +180,13 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(2.2) Пользователь #2 хочет покататься на скейте #1") {
-      val targets = Array(new Target("skateboard", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("skateboard", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя НЕТ права кататься на скейте")
       Given("** пользователь будет кататься на УЛИЦЕ")
       val attributes = Array(
-        new Attribute("permissionToRideSkateboard", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("placeType", new AttributeValue("street")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRideSkateboard", new TestAttributeValue(false)).asInstanceOf[Attribute],
+        new TestAttribute("placeType", new TestAttributeValue("street")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -201,13 +200,13 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(2.3) Пользователь #1 хочет покататься на скейте #2") {
-      val targets = Array(new Target("skateboard", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("skateboard", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право кататься на скейте")
       Given("** пользователь будет кататься в ОФИСЕ")
       val attributes = Array(
-        new Attribute("permissionToRideSkateboard", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("placeType", new AttributeValue("office")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRideSkateboard", new TestAttributeValue(true)).asInstanceOf[Attribute],
+        new TestAttribute("placeType", new TestAttributeValue("office")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -223,13 +222,13 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   Feature("(3) Самокаты:") {
     Scenario("(3.1) Пользователь #1 хочет покататься на самокате #1") {
-      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("scooter", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право кататься на скейте")
       Given("** профессия пользователя - КУРЬЕР")
       val attributes = Array(
-        new Attribute("permissionToRideScooter", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("profession", new AttributeValue("courier")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRideScooter", new TestAttributeValue(true)).asInstanceOf[Attribute],
+        new TestAttribute("profession", new TestAttributeValue("courier")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -243,13 +242,13 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(3.2) Пользователь #2 хочет покататься на самокате #1") {
-      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("scooter", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя ЕСТЬ право кататься на скейте")
       Given("** профессия пользователя - ПРОГРАММИСТ")
       val attributes = Array(
-        new Attribute("permissionToRideScooter", new AttributeValue(true)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("profession", new AttributeValue("programmer")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRideScooter", new TestAttributeValue(true)).asInstanceOf[Attribute],
+        new TestAttribute("profession", new TestAttributeValue("programmer")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -263,13 +262,13 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(3.3) Пользователь #3 хочет покататься на самокате #1") {
-      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("scooter", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя НЕТ права кататься на скейте")
       Given("** профессия пользователя - КУРЬЕР")
       val attributes = Array(
-        new Attribute("permissionToRideScooter", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("profession", new AttributeValue("courier")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRideScooter", new TestAttributeValue(false)).asInstanceOf[Attribute],
+        new TestAttribute("profession", new TestAttributeValue("courier")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -283,13 +282,13 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
 
     Scenario("(3.4) Пользователь #4 хочет покататься на самокате #1") {
-      val targets = Array(new Target("scooter", 1, "ride").asInstanceOf[PolicyDecisionPoint.Target])
+      val targets = Array(new TestTarget("scooter", 1, "ride").asInstanceOf[Target])
 
       Given("** у пользователя НЕТ права кататься на скейте")
       Given("** профессия пользователя - ПРОГРАММИСТ")
       val attributes = Array(
-        new Attribute("permissionToRideScooter", new AttributeValue(false)).asInstanceOf[PolicyDecisionPoint.Attribute],
-        new Attribute("profession", new AttributeValue("programmer")).asInstanceOf[PolicyDecisionPoint.Attribute],
+        new TestAttribute("permissionToRideScooter", new TestAttributeValue(false)).asInstanceOf[Attribute],
+        new TestAttribute("profession", new TestAttributeValue("programmer")).asInstanceOf[Attribute],
       )
 
       When(">>> запрашиваем проверку доступа")
@@ -303,7 +302,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
     }
   }
   private def assertDecision(
-    decisions: Future[Either[RuntimeException, Array[PolicyDecisionPoint.TargetedDecision]]],
+    decisions: Future[Either[RuntimeException, Array[TargetedDecision]]],
     deny: Boolean = false,
     permit: Boolean = false,
     indeterminate: Boolean = false,

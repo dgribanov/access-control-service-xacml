@@ -1,8 +1,7 @@
 package com.example.accesscontrol.api.impl
 
-import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint
-import com.example.accesscontrol.api.impl.domain.{PolicyDecisionPointImpl, PolicyRepository, PolicyRetrievalPoint, TargetedPolicyFactory}
-import com.example.accesscontrol.api.impl.infrastructure.PolicyRepositoryImpl
+import com.example.accesscontrol.api.impl.data.storage.PolicyRepositoryImpl
+import com.example.accesscontrol.api.impl.domain.{PolicyDecisionPoint, PolicyDecisionPointImpl, PolicyRepository, PolicyRetrievalPoint, TargetedPolicyFactory}
 import com.google.inject.AbstractModule
 import net.codingwell.scalaguice.ScalaModule
 

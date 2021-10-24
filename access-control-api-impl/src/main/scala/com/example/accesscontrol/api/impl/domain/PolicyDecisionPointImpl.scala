@@ -3,9 +3,25 @@ package com.example.accesscontrol.api.impl.domain
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.Inject
-import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint
-import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint._
-import com.example.accesscontrol.api.impl.application.Decision
+
+trait Target {
+  val objectType: String
+  val objectId: Int
+  val action: String
+}
+trait Attribute {
+  val name: String
+  val value: AttributeValue
+}
+trait AttributeValue {
+  val value: Any
+}
+trait PolicyDecisionPoint {
+  def makeDecision(
+    targets: Array[Target],
+    attributes: Array[Attribute]
+  ): Future[Either[RuntimeException, Array[TargetedDecision]]]
+}
 
 final case class PolicyDecisionPointImpl @Inject() (
   policyRetrievalPoint: PolicyRetrievalPoint,
@@ -16,7 +32,7 @@ final case class PolicyDecisionPointImpl @Inject() (
   def makeDecision(
     targets: Array[Target],
     attributes: Array[Attribute]
-  ): Future[Either[RuntimeException, Array[PolicyDecisionPoint.TargetedDecision]]] = {
+  ): Future[Either[RuntimeException, Array[TargetedDecision]]] = {
     policyRetrievalPoint.buildPolicyCollection().map({
       case Right(policyCollection) => Right(
         targets.map(
@@ -127,7 +143,7 @@ final case class PolicyDecisionPointImpl @Inject() (
   }
 }
 
-// implement trait com.example.accesscontrol.api.impl.application.Decision
+trait Decision
 object Decisions {
   abstract case class Deny() extends Decision {
     override def toString: String = "Deny"

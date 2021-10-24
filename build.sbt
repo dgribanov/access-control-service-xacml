@@ -26,46 +26,6 @@ lazy val `access-control-api-impl` = (project in file("access-control-api-impl")
       macwire,
       scalaTest,
       scalaGuice
-    ),
-    //lagomServiceHttpPort := 5005
+    )
   )
   .dependsOn(`access-control-rest-api`)
-
-/*lazy val `hello-world-api` = (project in file("hello-world-api"))
-  .settings(
-    libraryDependencies ++= Seq(
-      lagomScaladslApi
-    )
-  )
-
-lazy val `hello-world-impl` = (project in file("hello-world-impl"))
-  .enablePlugins(LagomScala)
-  .settings(
-    libraryDependencies ++= Seq(
-      lagomScaladslPersistenceCassandra,
-      lagomScaladslKafkaBroker,
-      lagomScaladslTestKit,
-      macwire,
-      scalaTest
-    )
-  )
-  .settings(lagomForkedTestSettings)
-  .dependsOn(`hello-world-api`)
-
-lazy val `hello-world-stream-api` = (project in file("hello-world-stream-api"))
-  .settings(
-    libraryDependencies ++= Seq(
-      lagomScaladslApi
-    )
-  )
-
-lazy val `hello-world-stream-impl` = (project in file("hello-world-stream-impl"))
-  .enablePlugins(LagomScala)
-  .settings(
-    libraryDependencies ++= Seq(
-      lagomScaladslTestKit,
-      macwire,
-      scalaTest
-    )
-  )
-  .dependsOn(`hello-world-stream-api`, `hello-world-api`)*/

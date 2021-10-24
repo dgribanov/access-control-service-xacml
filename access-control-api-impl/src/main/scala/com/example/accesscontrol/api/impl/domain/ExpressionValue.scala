@@ -1,7 +1,5 @@
 package com.example.accesscontrol.api.impl.domain
 
-import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint
-
 /**
  * Inspired by scala.math.PartiallyOrdered idea for compare objects
  * but with more correct option result of compare methods
@@ -41,9 +39,6 @@ sealed trait ExpressionValue[+T] {
 }
 
 object ExpressionValue {
-  type Attribute = PolicyDecisionPoint.Attribute
-  type AttributeValue = PolicyDecisionPoint.AttributeValue
-
   def apply(paramValue: ExpressionParameterValue)(implicit attributes: Array[Attribute]): ExpressionValue[Any] =
     paramValue match {
       case AttributeParameterValue(id) => AttributeExpressionValue(id, attributes)

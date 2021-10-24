@@ -1,7 +1,5 @@
 package com.example.accesscontrol.api.impl.domain
 
-import com.example.accesscontrol.api.impl.application.PolicyDecisionPoint.Target
-
 final class TargetedPolicyFactory {
   def createTargetedPolicy(target: Target, policyCollection: PolicyCollection): Option[TargetedPolicy] = {
     val policies = policyCollection.policySets

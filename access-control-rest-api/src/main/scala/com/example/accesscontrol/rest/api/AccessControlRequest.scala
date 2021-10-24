@@ -7,7 +7,7 @@ import play.api.libs.json.{Format, Json}
  * which specify the effective sub-type (a text field, with default name `_type` - fully-qualified name of sub-type).
  * For example: '{"_type": "AttributeValueInt", "value": 1}'
  */
-sealed trait AttributeValue
+sealed trait AttributeValue {val value: Any}
 case class AttributeValueString(value: String) extends AttributeValue
 case class AttributeValueBool(value: Boolean) extends AttributeValue
 case class AttributeValueInt(value: Int) extends AttributeValue
