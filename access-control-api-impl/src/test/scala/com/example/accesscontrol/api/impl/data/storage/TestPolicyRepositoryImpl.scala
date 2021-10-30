@@ -1,4 +1,4 @@
-package com.example.accesscontrol.api.impl.data
+package com.example.accesscontrol.api.impl.data.storage
 
 import com.example.accesscontrol.api.impl.domain.PolicyRepository
 import play.api.libs.json.{JsValue, Json}

@@ -1,13 +1,13 @@
-package com.example.accesscontrol.api.impl.application
+package com.example.accesscontrol.api.impl.apirest
 
 import akka.NotUsed
-import com.lightbend.lagom.scaladsl.api.ServiceCall
-
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.duration._
-import scala.language.implicitConversions
-import com.example.accesscontrol.api.impl.ServiceInjector
-import com.example.accesscontrol.api.impl.domain.{Attribute, AttributeValue, PolicyDecisionPoint, Target, TargetedDecision}
+import com.example.accesscontrol.api.impl.domain.{
+  AttributeValue,
+  Target,
+  Attribute,
+  TargetedDecision,
+  PolicyDecisionPoint
+}
 import com.example.accesscontrol.rest.api.{
   AccessControlError => ApiAccessControlError,
   AccessControlRequest => ApiAccessControlRequest,
@@ -18,6 +18,11 @@ import com.example.accesscontrol.rest.api.{
   ResultedDecision => ApiResultedDecision,
   Target => ApiTarget
 }
+import com.lightbend.lagom.scaladsl.api.ServiceCall
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.implicitConversions
 
 class TargetImpl (val objectType: String, val objectId: Int, val action: String) extends Target
 class AttributeImpl (val name: String, val value: AttributeValue) extends Attribute

@@ -1,7 +1,17 @@
-package com.example.accesscontrol.api.impl.domain
+package com.example.accesscontrol.api.impl.application
 
-import com.example.accesscontrol.api.impl.data.TestPolicyRepositoryImpl
+import com.example.accesscontrol.api.impl.data.storage.TestPolicyRepositoryImpl
+import com.example.accesscontrol.api.impl.domain.{
+  Attribute,
+  AttributeValue,
+  Decisions,
+  PolicyRepository,
+  PolicyRetrievalPoint,
+  Target,
+  TargetedDecision
+}
 import com.example.accesscontrol.api.impl.BaseIntegrationSpec
+import com.example.accesscontrol.api.impl.data.mapping.PolicyRetrievalPointImpl
 import org.scalatest.Assertion
 
 import scala.concurrent.Future
@@ -13,7 +23,7 @@ class TestAttributeValue (val value: Any) extends AttributeValue
 class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   val policyRepository: PolicyRepository = new TestPolicyRepositoryImpl
-  val policyRetrievalPoint: PolicyRetrievalPoint = new PolicyRetrievalPoint(policyRepository)
+  val policyRetrievalPoint: PolicyRetrievalPoint = new PolicyRetrievalPointImpl(policyRepository)
   val targetedPolicyFactory: TargetedPolicyFactory = new TargetedPolicyFactory
 
   info("Как сервис, управляющий продажей и арендой велосипедов, самокатов и скейтов, я хочу проверить доступ пользователя к основным действиям с моими товарами.")

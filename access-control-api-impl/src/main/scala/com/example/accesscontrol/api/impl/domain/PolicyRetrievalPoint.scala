@@ -1,98 +1,49 @@
 package com.example.accesscontrol.api.impl.domain
 
-import play.api.libs.json.{Format, JsError, JsSuccess, Json}
+import play.api.libs.json.{Format, Json}
 
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-final class PolicyRetrievalPoint @Inject() (policyRepository: PolicyRepository) {
-  implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
-
+trait PolicyRetrievalPoint {
   case class PolicyCollectionParsingError(errorMessage: String) extends RuntimeException
 
-  def buildPolicyCollection(): Future[Either[PolicyCollectionParsingError, PolicyCollection]] = {
-    Future {
-      Json.fromJson[PolicyCollection](policyRepository.fetchPolicyCollection) match {
-        case JsSuccess(policyCollection, _) => Right(policyCollection)
-        case JsError.Message(errMsg)        => Left(PolicyCollectionParsingError(errMsg))
-      }
-    }
-  }
+  def buildPolicyCollection(): Future[Either[PolicyCollectionParsingError, PolicyCollection]]
+}
+
+trait TargetedPolicy {
+  val target: Target
+  val policy: Policy
+}
+
+trait PolicyCollection {
+  val policySets: Array[_ <: PolicySet]
 }
 
 trait WithTargetType {
   val target: TargetType
 }
 
-object PolicyCollection {
-  implicit val format: Format[PolicyCollection] = Json.format[PolicyCollection]
+trait PolicySet extends WithTargetType {
+  val target: TargetType
+  val combiningAlgorithm: CombiningAlgorithms.Algorithm
+  val policies: Array[_ <: Policy]
 }
 
-case class PolicyCollection(policySets: Array[PolicySet])
-
-object PolicySet {
-  implicit val format: Format[PolicySet] = Json.format[PolicySet]
+trait TargetType {
+  val value: String
 }
 
-case class PolicySet(target: TargetType, combiningAlgorithm: CombiningAlgorithms.Algorithm, policies: Array[Policy]) extends WithTargetType
-
-sealed trait TargetType
-case class ObjectTypeTarget(value: String) extends TargetType
-case class ActionTypeTarget(value: String) extends TargetType
-case class AttributeTypeTarget(value: String) extends TargetType
-
-object ObjectTypeTarget {
-  implicit val format: Format[ObjectTypeTarget] = Json.format[ObjectTypeTarget]
+trait Policy extends WithTargetType {
+  val target: TargetType
+  val combiningAlgorithm: CombiningAlgorithms.Algorithm
+  val rules: Array[_ <: Rule]
 }
 
-object ActionTypeTarget {
-  implicit val format: Format[ActionTypeTarget] = Json.format[ActionTypeTarget]
-}
-
-object AttributeTypeTarget {
-  implicit val format: Format[AttributeTypeTarget] = Json.format[AttributeTypeTarget]
-}
-
-object TargetType {
-  import play.api.libs.json.{Reads, Writes, JsPath, JsError, JsObject, JsString}
-
-  implicit val format: Format[TargetType] = Format[TargetType] (
-    Reads { js =>
-      // use the _type field to determine how to deserialize
-      val valueType = (JsPath \ "_type").read[String].reads(js)
-      valueType.fold(
-        _ => JsError("type undefined or incorrect"),
-        {
-          case "ObjectTypeTarget"    => JsPath.read[ObjectTypeTarget].reads(js)
-          case "ActionTypeTarget"    => JsPath.read[ActionTypeTarget].reads(js)
-          case "AttributeTypeTarget" => JsPath.read[AttributeTypeTarget].reads(js)
-        }
-      )
-    },
-    Writes {
-      case target: ObjectTypeTarget =>
-        JsObject(
-          Seq(
-            "_type" -> JsString("ObjectTypeTarget"),
-            "id"    -> ObjectTypeTarget.format.writes(target)
-          )
-        )
-      case target: ActionTypeTarget =>
-        JsObject(
-          Seq(
-            "_type" -> JsString("ActionTypeTarget"),
-            "value" -> ActionTypeTarget.format.writes(target)
-          )
-        )
-      case target: AttributeTypeTarget =>
-        JsObject(
-          Seq(
-            "_type" -> JsString("AttributeTypeTarget"),
-            "value" -> AttributeTypeTarget.format.writes(target)
-          )
-        )
-    }
-  )
+trait Rule {
+  val target: TargetType
+  val condition: Condition
+  val positiveEffect: PositiveEffect
+  val negativeEffect: NegativeEffect
 }
 
 object CombiningAlgorithms extends Enumeration {
@@ -102,18 +53,6 @@ object CombiningAlgorithms extends Enumeration {
 
   implicit val format: Format[Algorithm] = Json.formatEnum(this)
 }
-
-object Policy {
-  implicit val format: Format[Policy] = Json.format[Policy]
-}
-
-case class Policy(target: TargetType, combiningAlgorithm: CombiningAlgorithms.Algorithm, rules: Array[Rule]) extends WithTargetType
-
-object Rule {
-  implicit val format: Format[Rule] = Json.format[Rule]
-}
-
-case class Rule(target: TargetType, condition: Condition, positiveEffect: PositiveEffect, negativeEffect: NegativeEffect)
 
 sealed trait Condition
 case class CompareCondition(operation: Operations.Operation, leftOperand: ExpressionParameterValue, rightOperand: ExpressionParameterValue) extends Condition

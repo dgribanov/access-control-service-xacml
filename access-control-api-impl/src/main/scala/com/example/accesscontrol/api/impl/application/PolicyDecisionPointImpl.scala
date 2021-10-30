@@ -1,29 +1,28 @@
-package com.example.accesscontrol.api.impl.domain
+package com.example.accesscontrol.api.impl.application
 
+import com.example.accesscontrol.api.impl.domain.{
+  PolicyRetrievalPoint,
+  PolicyDecisionPoint,
+  Target,
+  Attribute,
+  TargetedDecision,
+  Decisions,
+  Decision,
+  Condition,
+  Predicates,
+  Operations,
+  CompareCondition,
+  CompositeCondition,
+  EffectDecisions,
+  ExpressionValue,
+  CombiningAlgorithms
+}
+
+import javax.inject.Inject
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
-import javax.inject.Inject
 
-trait Target {
-  val objectType: String
-  val objectId: Int
-  val action: String
-}
-trait Attribute {
-  val name: String
-  val value: AttributeValue
-}
-trait AttributeValue {
-  val value: Any
-}
-trait PolicyDecisionPoint {
-  def makeDecision(
-    targets: Array[Target],
-    attributes: Array[Attribute]
-  ): Future[Either[RuntimeException, Array[TargetedDecision]]]
-}
-
-final case class PolicyDecisionPointImpl @Inject() (
+final case class PolicyDecisionPointImpl @Inject()(
   policyRetrievalPoint: PolicyRetrievalPoint,
   targetedPolicyFactory: TargetedPolicyFactory
 ) extends PolicyDecisionPoint {
@@ -44,13 +43,15 @@ final case class PolicyDecisionPointImpl @Inject() (
                   tp.policy.rules map (rule => computeDecision(
                     checkCondition(rule.condition)(attributes),
                     {
-                      case true  => decisionTypeToDecision(rule.positiveEffect.decision)
+                      case true => decisionTypeToDecision(rule.positiveEffect.decision)
                       case false => decisionTypeToDecision(rule.negativeEffect.decision)
                     }
                   )),
                   tp.policy.combiningAlgorithm
                 )
-              case None => Future { Decisions.NonApplicable() }
+              case None => Future {
+                Decisions.NonApplicable()
+              }
             }
           )
         )
@@ -62,7 +63,7 @@ final case class PolicyDecisionPointImpl @Inject() (
   private def computeDecision(resolution: Future[Option[Boolean]], f: Boolean => Decision): Future[Decision] = {
     resolution map {
       case Some(res) => f(res)
-      case None      => Decisions.Indeterminate()
+      case None => Decisions.Indeterminate()
     }
   }
 
@@ -73,35 +74,45 @@ final case class PolicyDecisionPointImpl @Inject() (
       predicate match {
         case Predicates.AND => checkCondition(lCond) zip checkCondition(rCond) map {
           case (Some(lResult), Some(rResult)) => Some(lResult && rResult)
-          case _                              => Some(false)
+          case _ => Some(false)
         }
-        case Predicates.OR  => checkCondition(lCond) zip checkCondition(rCond) map {
+        case Predicates.OR => checkCondition(lCond) zip checkCondition(rCond) map {
           case (Some(lResult), Some(rResult)) => Some(lResult || rResult)
-          case _                              => Some(false)
+          case _ => Some(false)
         }
       }
     }
 
     def compareOperation(operationType: Operations.Operation, lOp: ExpressionValue[Any], rOp: ExpressionValue[Any]): Future[Option[Boolean]] = {
       operationType match {
-        case Operations.eq  => Future { lOp equals rOp }
-        case Operations.lt  => Future { lOp < rOp }
-        case Operations.lte => Future { lOp <= rOp }
-        case Operations.gt  => Future { lOp > rOp }
-        case Operations.gte => Future { lOp >= rOp }
+        case Operations.eq => Future {
+          lOp equals rOp
+        }
+        case Operations.lt => Future {
+          lOp < rOp
+        }
+        case Operations.lte => Future {
+          lOp <= rOp
+        }
+        case Operations.gt => Future {
+          lOp > rOp
+        }
+        case Operations.gte => Future {
+          lOp >= rOp
+        }
       }
     }
 
     condition match {
-      case CompareCondition(op, lOp, rOp)         => compareOperation(op, ExpressionValue(lOp), ExpressionValue(rOp))
+      case CompareCondition(op, lOp, rOp) => compareOperation(op, ExpressionValue(lOp), ExpressionValue(rOp))
       case CompositeCondition(pred, lCond, rCond) => composeConditions(pred, lCond, rCond)
     }
   }
 
   private def decisionTypeToDecision(decisionType: EffectDecisions.Decision): Decision = {
     decisionType match {
-      case EffectDecisions.Deny          => Decisions.Deny()
-      case EffectDecisions.Permit        => Decisions.Permit()
+      case EffectDecisions.Deny => Decisions.Deny()
+      case EffectDecisions.Permit => Decisions.Permit()
       case EffectDecisions.Indeterminate => Decisions.Indeterminate()
       case EffectDecisions.NonApplicable => Decisions.NonApplicable()
     }
@@ -131,7 +142,7 @@ final case class PolicyDecisionPointImpl @Inject() (
     }
 
     combiningAlgorithm match {
-      case CombiningAlgorithms.DenyOverride   => Future.sequence(decisions.toList) map {
+      case CombiningAlgorithms.DenyOverride => Future.sequence(decisions.toList) map {
         case d: List[Decision @unchecked] if d.nonEmpty => denyOverride(d, Decisions.NonApplicable())
         case d: List[Decision @unchecked] if d.isEmpty  => Decisions.NonApplicable()
       }
@@ -141,41 +152,4 @@ final case class PolicyDecisionPointImpl @Inject() (
       }
     }
   }
-}
-
-trait Decision
-object Decisions {
-  abstract case class Deny() extends Decision {
-    override def toString: String = "Deny"
-  }
-  abstract case class Permit() extends Decision {
-    override def toString: String = "Permit"
-  }
-  abstract case class Indeterminate() extends Decision {
-    override def toString: String = "Indeterminate"
-  }
-  abstract case class NonApplicable() extends Decision {
-    override def toString: String = "NonApplicable"
-  }
-
-  object Deny {
-    def apply(): Deny = new Decisions.Deny {}
-  }
-
-  object Permit {
-    def apply(): Permit = new Decisions.Permit {}
-  }
-
-  object Indeterminate {
-    def apply(): Indeterminate = new Decisions.Indeterminate {}
-  }
-
-  object NonApplicable {
-    def apply(): NonApplicable = new Decisions.NonApplicable {}
-  }
-}
-
-abstract class TargetedDecision(val target: Target, val decision: Future[Decision])
-object TargetedDecision {
-  def apply(target: Target, decision: Future[Decision]): TargetedDecision = new TargetedDecision(target, decision) {}
 }
