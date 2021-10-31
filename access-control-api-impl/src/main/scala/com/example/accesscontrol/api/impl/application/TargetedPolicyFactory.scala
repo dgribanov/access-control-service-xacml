@@ -1,7 +1,8 @@
 package com.example.accesscontrol.api.impl.application
 
+// todo remove dependency by data.mapping
 import com.example.accesscontrol.api.impl.data.mapping.{
-  PolicySetSerializableImpl,
+  PolicySetSerializable,
   ObjectTypeTarget,
   ActionTypeTarget,
   AttributeTypeTarget
@@ -17,7 +18,7 @@ import com.example.accesscontrol.api.impl.domain.{
 final class TargetedPolicyFactory {
   def createTargetedPolicy(target: Target, policyCollection: PolicyCollection): Option[TargetedPolicy] = {
     val policies = for {
-      policySet <- policyCollection.policySets.asInstanceOf[Array[PolicySetSerializableImpl]]
+      policySet <- policyCollection.policySets.asInstanceOf[Array[PolicySetSerializable]]
       if targetMatcher(target, policySet)
       policy <- policySet.policies
       if targetMatcher(target, policy)

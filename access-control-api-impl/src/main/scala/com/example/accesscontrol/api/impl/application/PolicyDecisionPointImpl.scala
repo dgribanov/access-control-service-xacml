@@ -11,12 +11,12 @@ import com.example.accesscontrol.api.impl.domain.{
   Condition,
   Predicates,
   Operations,
-  CompareCondition,
-  CompositeCondition,
   EffectDecisions,
   ExpressionValue,
   CombiningAlgorithms
 }
+// todo remove dependency by data.mapping
+import com.example.accesscontrol.api.impl.data.mapping.{CompareCondition, CompositeCondition}
 
 import javax.inject.Inject
 import scala.annotation.tailrec

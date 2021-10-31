@@ -1,5 +1,13 @@
 package com.example.accesscontrol.api.impl.domain
 
+// todo remove dependency by data.mapping
+import com.example.accesscontrol.api.impl.data.mapping.{
+  AttributeParameterValue,
+  BoolParameterValue,
+  IntParameterValue,
+  StringParameterValue
+}
+
 /**
  * Inspired by scala.math.PartiallyOrdered idea for compare objects
  * but with more correct option result of compare methods
