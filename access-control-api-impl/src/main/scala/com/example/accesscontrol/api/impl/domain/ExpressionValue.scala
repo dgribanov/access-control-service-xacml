@@ -41,10 +41,10 @@ sealed trait ExpressionValue[+T] {
 object ExpressionValue {
   def apply(paramValue: ExpressionParameterValue)(implicit attributes: Array[Attribute]): ExpressionValue[Any] =
     paramValue match {
-      case AttributeParameterValue(id) => AttributeExpressionValue(id, attributes)
-      case BoolParameterValue(value)   => BoolExpressionValue(value)
-      case IntParameterValue(value)    => IntExpressionValue(value)
-      case StringParameterValue(value) => StringExpressionValue(value)
+      case AttributeParameterValueImpl(id) => AttributeExpressionValue(id, attributes)
+      case BoolParameterValueImpl(value)   => BoolExpressionValue(value)
+      case IntParameterValueImpl(value)    => IntExpressionValue(value)
+      case StringParameterValueImpl(value) => StringExpressionValue(value)
     }
 
   abstract case class AttributeExpressionValue(value: ExpressionValue[Any]) extends ExpressionValue[AttributeExpressionValue] {

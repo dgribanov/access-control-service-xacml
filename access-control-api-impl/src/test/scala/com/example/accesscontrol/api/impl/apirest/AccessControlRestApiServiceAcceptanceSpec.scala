@@ -1,10 +1,19 @@
-package com.example.accesscontrol.api.impl.application
+package com.example.accesscontrol.api.impl.apirest
 
+import com.example.accesscontrol.api.impl.{
+  AccessControlApplication,
+  BaseAcceptanceSpec,
+  TestAccessControlModule
+}
+import com.example.accesscontrol.rest.api.{
+  AccessControlService,
+  AccessControlRequest,
+  AccessControlSuccessResponse,
+  AccessControlError,
+  Target
+}
 import com.lightbend.lagom.scaladsl.server.LocalServiceLocator
 import com.lightbend.lagom.scaladsl.testkit.ServiceTest
-import com.example.accesscontrol.rest.api.{AccessControlError, AccessControlRequest, AccessControlSuccessResponse, Target}
-import com.example.accesscontrol.api.impl.{AccessControlApplication, BaseAcceptanceSpec, TestAccessControlModule}
-import com.example.accesscontrol.rest.api.AccessControlService
 
 class AccessControlRestApiServiceAcceptanceSpec extends BaseAcceptanceSpec {
   lazy private implicit val module: TestAccessControlModule = new TestAccessControlModule

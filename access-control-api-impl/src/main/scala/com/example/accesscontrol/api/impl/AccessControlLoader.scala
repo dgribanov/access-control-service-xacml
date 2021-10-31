@@ -1,6 +1,6 @@
 package com.example.accesscontrol.api.impl
 
-import com.example.accesscontrol.api.impl.application.AccessControlRestApiService
+import com.example.accesscontrol.api.impl.apirest.AccessControlRestApiService
 import com.example.accesscontrol.api.impl.domain.PolicyDecisionPoint
 import com.example.accesscontrol.rest.api.AccessControlService
 import com.google.inject.Module
