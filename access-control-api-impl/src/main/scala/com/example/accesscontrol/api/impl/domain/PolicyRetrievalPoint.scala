@@ -19,11 +19,7 @@ trait PolicyCollection {
   val policySets: Array[_ <: PolicySet]
 }
 
-trait WithTargetType {
-  val target: TargetType
-}
-
-trait PolicySet extends WithTargetType {
+trait PolicySet {
   val target: TargetType
   val combiningAlgorithm: CombiningAlgorithms.Algorithm
   val policies: Array[_ <: Policy]
@@ -33,7 +29,7 @@ trait TargetType {
   val value: String
 }
 
-trait Policy extends WithTargetType {
+trait Policy {
   val target: TargetType
   val combiningAlgorithm: CombiningAlgorithms.Algorithm
   val rules: Array[_ <: Rule]

@@ -1,24 +1,13 @@
 package com.example.accesscontrol.api.impl.application
 
-// todo remove dependency by data.mapping
-import com.example.accesscontrol.api.impl.data.mapping.{
-  PolicySetSerializable,
-  ObjectTypeTarget,
-  ActionTypeTarget,
-  AttributeTypeTarget
-}
-import com.example.accesscontrol.api.impl.domain.{
-  PolicyCollection,
-  Target,
-  TargetType,
-  Policy,
-  TargetedPolicy
-}
+// todo remove wrong dependency
+import com.example.accesscontrol.api.impl.data.mapping.{ActionTypeTarget, AttributeParameterValue, AttributeTypeTarget, BoolParameterValue, CompareCondition, CompositeCondition, IntParameterValue, ObjectTypeTarget, PolicySerializable, PolicySetSerializable, RuleSerializable, StringParameterValue, PolicyCollectionSerializable}
+import com.example.accesscontrol.api.impl.domain.{AttributeParameterValueImpl, BoolParameterValueImpl, CompareConditionImpl, CompositeConditionImpl, Condition, ConditionImpl, ExpressionParameterValue, ExpressionParameterValueImpl, IntParameterValueImpl, Policy, PolicyCollection, PolicySet, PolicyImpl, Rule, RuleImpl, PolicySetImpl, PolicyCollectionImpl, StringParameterValueImpl, Target, TargetType, TargetedPolicy}
 
 final class TargetedPolicyFactory {
   def createTargetedPolicy(target: Target, policyCollection: PolicyCollection): Option[TargetedPolicy] = {
     val policies = for {
-      policySet <- policyCollection.policySets.asInstanceOf[Array[PolicySetSerializable]]
+      policySet <- PolicyCollectionConverter.convert(policyCollection).policySets
       if targetMatcher(target, policySet)
       policy <- policySet.policies
       if targetMatcher(target, policy)
@@ -37,6 +26,50 @@ final class TargetedPolicyFactory {
       case ActionTypeTarget(value: String) => value == checkTarget.action
       case AttributeTypeTarget(_)          => false
     }
+  }
+}
+
+object PolicyCollectionConverter {
+  def convert: PartialFunction[PolicyCollection, PolicyCollectionImpl] = {
+    case PolicyCollectionSerializable(pS) => PolicyCollectionImpl(pS map PolicySetConverter.convert)
+  }
+}
+
+object PolicySetConverter {
+  def convert: PartialFunction[PolicySet, PolicySetImpl] = {
+    case PolicySetSerializable(t, cA, p) => PolicySetImpl(t, cA, p map PolicyConverter.convert)
+  }
+}
+
+object PolicyConverter {
+  def convert: PartialFunction[Policy, PolicyImpl] = {
+    case PolicySerializable(t, cA, r) =>
+      PolicyImpl(t, cA, r map RuleConverter.convert)
+  }
+}
+
+object RuleConverter {
+  def convert: PartialFunction[Rule, RuleImpl] = {
+    case RuleSerializable(t, c, pE, nE) =>
+      RuleImpl(t, ConditionConverter.convert(c), pE, nE)
+  }
+}
+
+object ConditionConverter {
+  def convert: PartialFunction[Condition, ConditionImpl] = {
+    case CompareCondition(o, lOp, rOp) =>
+      CompareConditionImpl(o, ExpressionParameterValueConverter.convert(lOp), ExpressionParameterValueConverter.convert(rOp))
+    case CompositeCondition(p, lC, rC) =>
+      CompositeConditionImpl(p, ConditionConverter.convert(lC), ConditionConverter.convert(rC))
+  }
+}
+
+object ExpressionParameterValueConverter {
+  def convert: PartialFunction[ExpressionParameterValue, ExpressionParameterValueImpl] = {
+    case AttributeParameterValue(id) => AttributeParameterValueImpl(id)
+    case BoolParameterValue(value)   => BoolParameterValueImpl(value)
+    case IntParameterValue(value)    => IntParameterValueImpl(value)
+    case StringParameterValue(value) => StringParameterValueImpl(value)
   }
 }
 
