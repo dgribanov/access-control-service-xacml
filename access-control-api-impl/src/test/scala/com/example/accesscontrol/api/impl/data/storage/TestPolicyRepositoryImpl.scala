@@ -36,7 +36,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                 "decision": "Deny"
               },
               "condition": {
-                "_type": "CompareCondition",
+                "_type": "CompareConditionSerializable",
                 "operation": "eq",
                 "leftOperand": {
                   "_type": "AttributeValue",
@@ -71,10 +71,10 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                 "decision": "Deny"
               },
               "condition": {
-                "_type": "CompositeCondition",
+                "_type": "CompositeConditionSerializable",
                 "predicate": "AND",
                 "leftCondition": {
-                  "_type": "CompareCondition",
+                  "_type": "CompareConditionSerializable",
                   "operation": "eq",
                   "leftOperand": {
                     "_type": "AttributeValue",
@@ -86,10 +86,10 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                   }
                 },
                 "rightCondition": {
-                  "_type": "CompositeCondition",
+                  "_type": "CompositeConditionSerializable",
                   "predicate": "OR",
                   "leftCondition": {
-                    "_type": "CompareCondition",
+                    "_type": "CompareConditionSerializable",
                     "operation": "gte",
                     "leftOperand": {
                       "_type": "AttributeValue",
@@ -101,7 +101,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                     }
                   },
                   "rightCondition": {
-                    "_type": "CompareCondition",
+                    "_type": "CompareConditionSerializable",
                     "operation": "eq",
                     "leftOperand": {
                       "_type": "AttributeValue",
@@ -146,7 +146,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                 "decision": "Deny"
               },
               "condition": {
-                "_type": "CompareCondition",
+                "_type": "CompareConditionSerializable",
                 "operation": "eq",
                 "leftOperand": {
                   "_type": "AttributeValue",
@@ -173,7 +173,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                 "decision": "Permit"
               },
               "condition": {
-                "_type": "CompareCondition",
+                "_type": "CompareConditionSerializable",
                 "operation": "eq",
                 "leftOperand": {
                   "_type": "AttributeValue",
@@ -216,7 +216,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                 "decision": "Deny"
               },
               "condition": {
-                "_type": "CompareCondition",
+                "_type": "CompareConditionSerializable",
                 "operation": "eq",
                 "leftOperand": {
                   "_type": "AttributeValue",
@@ -243,7 +243,7 @@ final class TestPolicyRepositoryImpl extends PolicyRepository {
                 "decision": "Deny"
               },
               "condition": {
-                "_type": "CompareCondition",
+                "_type": "CompareConditionSerializable",
                 "operation": "eq",
                 "leftOperand": {
                   "_type": "AttributeValue",

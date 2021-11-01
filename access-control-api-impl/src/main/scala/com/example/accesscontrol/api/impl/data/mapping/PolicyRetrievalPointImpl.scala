@@ -14,7 +14,13 @@ import com.example.accesscontrol.api.impl.domain.{
   Predicates,
   Rule,
   TargetType,
-  Effect
+  Effect,
+  AttributeParameterValue,
+  BoolParameterValue,
+  IntParameterValue,
+  StringParameterValue,
+  CompareCondition,
+  CompositeCondition
 }
 import play.api.libs.json.{Format, JsError, JsSuccess, Json}
 
@@ -118,15 +124,15 @@ object TargetTypeSerializable {
 }
 
 abstract class ConditionSerializable extends Condition
-case class CompareCondition(operation: Operations.Operation, leftOperand: ExpressionParameterValueSerializable, rightOperand: ExpressionParameterValueSerializable) extends ConditionSerializable
-case class CompositeCondition(predicate: Predicates.Predicate, leftCondition: ConditionSerializable, rightCondition: ConditionSerializable) extends ConditionSerializable
+case class CompareConditionSerializable(operation: Operations.Operation, leftOperand: ExpressionParameterValueSerializable, rightOperand: ExpressionParameterValueSerializable) extends ConditionSerializable with CompareCondition
+case class CompositeConditionSerializable(predicate: Predicates.Predicate, leftCondition: ConditionSerializable, rightCondition: ConditionSerializable) extends ConditionSerializable with CompositeCondition
 
-object CompareCondition {
-  implicit val format: Format[CompareCondition] = Json.format[CompareCondition]
+object CompareConditionSerializable {
+  implicit val format: Format[CompareConditionSerializable] = Json.format[CompareConditionSerializable]
 }
 
-object CompositeCondition {
-  implicit val format: Format[CompositeCondition] = Json.format[CompositeCondition]
+object CompositeConditionSerializable {
+  implicit val format: Format[CompositeConditionSerializable] = Json.format[CompositeConditionSerializable]
 }
 
 object ConditionSerializable {
@@ -139,28 +145,28 @@ object ConditionSerializable {
       valueType.fold(
         _ => JsError("type undefined or incorrect"),
         {
-          case "CompareCondition"   => JsPath.read[CompareCondition].reads(js)
-          case "CompositeCondition" => JsPath.read[CompositeCondition].reads(js)
+          case "CompareConditionSerializable"   => JsPath.read[CompareConditionSerializable].reads(js)
+          case "CompositeConditionSerializable" => JsPath.read[CompositeConditionSerializable].reads(js)
         }
       )
     },
     Writes {
-      case condition: CompareCondition =>
+      case condition: CompareConditionSerializable =>
         JsObject(
           Seq(
-            "_type"        -> JsString("CompareCondition"),
-            "operation"    -> CompareCondition.format.writes(condition),
-            "leftOperand"  -> CompareCondition.format.writes(condition),
-            "rightOperand" -> CompareCondition.format.writes(condition)
+            "_type"        -> JsString("CompareConditionSerializable"),
+            "operation"    -> CompareConditionSerializable.format.writes(condition),
+            "leftOperand"  -> CompareConditionSerializable.format.writes(condition),
+            "rightOperand" -> CompareConditionSerializable.format.writes(condition)
           )
         )
-      case condition: CompositeCondition =>
+      case condition: CompositeConditionSerializable =>
         JsObject(
           Seq(
-            "_type"          -> JsString("CompositeCondition"),
-            "predicate"      -> CompositeCondition.format.writes(condition),
-            "leftCondition"  -> CompositeCondition.format.writes(condition),
-            "rightCondition" -> CompositeCondition.format.writes(condition)
+            "_type"          -> JsString("CompositeConditionSerializable"),
+            "predicate"      -> CompositeConditionSerializable.format.writes(condition),
+            "leftCondition"  -> CompositeConditionSerializable.format.writes(condition),
+            "rightCondition" -> CompositeConditionSerializable.format.writes(condition)
           )
         )
     }
@@ -179,10 +185,10 @@ object NegativeEffect {
 }
 
 abstract class ExpressionParameterValueSerializable extends ExpressionParameterValue
-case class AttributeParameterValue(id: String) extends ExpressionParameterValueSerializable
-case class BoolParameterValue(value: Boolean) extends ExpressionParameterValueSerializable
-case class IntParameterValue(value: Int) extends ExpressionParameterValueSerializable
-case class StringParameterValue(value: String) extends ExpressionParameterValueSerializable
+case class AttributeParameterValueSerializable(id: String) extends ExpressionParameterValueSerializable with AttributeParameterValue
+case class BoolParameterValueSerializable(value: Boolean) extends ExpressionParameterValueSerializable with BoolParameterValue
+case class IntParameterValueSerializable(value: Int) extends ExpressionParameterValueSerializable with IntParameterValue
+case class StringParameterValueSerializable(value: String) extends ExpressionParameterValueSerializable with StringParameterValue
 
 object ExpressionParameterValueSerializable {
   import play.api.libs.json.{Reads, Writes, JsPath, JsError, JsObject, JsString}
@@ -194,58 +200,58 @@ object ExpressionParameterValueSerializable {
       valueType.fold(
         _ => JsError("type undefined or incorrect"),
         {
-          case "AttributeValue" => JsPath.read[AttributeParameterValue].reads(js)
-          case "BoolValue"      => JsPath.read[BoolParameterValue].reads(js)
-          case "IntValue"       => JsPath.read[IntParameterValue].reads(js)
-          case "StringValue"    => JsPath.read[StringParameterValue].reads(js)
+          case "AttributeValue" => JsPath.read[AttributeParameterValueSerializable].reads(js)
+          case "BoolValue"      => JsPath.read[BoolParameterValueSerializable].reads(js)
+          case "IntValue"       => JsPath.read[IntParameterValueSerializable].reads(js)
+          case "StringValue"    => JsPath.read[StringParameterValueSerializable].reads(js)
         }
       )
     },
     Writes {
-      case attr: AttributeParameterValue =>
+      case attr: AttributeParameterValueSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("AttributeValue"),
-            "id"    -> AttributeParameterValue.format.writes(attr)
+            "id"    -> AttributeParameterValueSerializable.format.writes(attr)
           )
         )
-      case boolVal: BoolParameterValue =>
+      case boolVal: BoolParameterValueSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("BoolValue"),
-            "value" -> BoolParameterValue.format.writes(boolVal)
+            "value" -> BoolParameterValueSerializable.format.writes(boolVal)
           )
         )
-      case intVal: IntParameterValue =>
+      case intVal: IntParameterValueSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("IntValue"),
-            "value" -> IntParameterValue.format.writes(intVal)
+            "value" -> IntParameterValueSerializable.format.writes(intVal)
           )
         )
-      case stringVal: StringParameterValue =>
+      case stringVal: StringParameterValueSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("StringValue"),
-            "value" -> StringParameterValue.format.writes(stringVal)
+            "value" -> StringParameterValueSerializable.format.writes(stringVal)
           )
         )
     }
   )
 }
 
-object AttributeParameterValue {
-  implicit val format: Format[AttributeParameterValue] = Json.format[AttributeParameterValue]
+object AttributeParameterValueSerializable {
+  implicit val format: Format[AttributeParameterValueSerializable] = Json.format[AttributeParameterValueSerializable]
 }
 
-object BoolParameterValue {
-  implicit val format: Format[BoolParameterValue] = Json.format[BoolParameterValue]
+object BoolParameterValueSerializable {
+  implicit val format: Format[BoolParameterValueSerializable] = Json.format[BoolParameterValueSerializable]
 }
 
-object IntParameterValue {
-  implicit val format: Format[IntParameterValue] = Json.format[IntParameterValue]
+object IntParameterValueSerializable {
+  implicit val format: Format[IntParameterValueSerializable] = Json.format[IntParameterValueSerializable]
 }
 
-object StringParameterValue {
-  implicit val format: Format[StringParameterValue] = Json.format[StringParameterValue]
+object StringParameterValueSerializable {
+  implicit val format: Format[StringParameterValueSerializable] = Json.format[StringParameterValueSerializable]
 }

@@ -7,7 +7,7 @@ import com.example.accesscontrol.api.impl.domain.{
   Attribute,
   TargetedDecision,
   Decisions,
-  PolicyImpl
+  PolicyExecutable
 }
 
 import javax.inject.Inject
@@ -30,7 +30,7 @@ final case class PolicyDecisionPointImpl @Inject()(
             target,
             targetedPolicyFactory.createTargetedPolicy(target, policyCollection) match {
               case Some(tp) => tp.policy match {
-                case p: PolicyImpl => p.makeDecision(attributes)
+                case p: PolicyExecutable => p.makeDecision(attributes)
               }
               case None => Future {
                 Decisions.NonApplicable()

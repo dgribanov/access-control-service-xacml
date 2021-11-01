@@ -2,7 +2,13 @@ package com.example.accesscontrol.api.impl.domain
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class RuleImpl(
+object RuleExecutable {
+  def convert: PartialFunction[Rule, RuleExecutable] = {
+    case r: Rule => RuleExecutable(r.target, ConditionExecutable.convert(r.condition), r.positiveEffect, r.negativeEffect)
+  }
+}
+
+case class RuleExecutable(
   target: TargetType,
   condition: Condition,
   positiveEffect: Effect,
@@ -64,8 +70,8 @@ case class RuleImpl(
     }
 
     condition match {
-      case CompareConditionImpl(op, lOp, rOp)         => compareOperation(op, ExpressionValue(lOp), ExpressionValue(rOp))
-      case CompositeConditionImpl(pred, lCond, rCond) => composeConditions(pred, lCond, rCond)
+      case CompareConditionExecutable(op, lOp, rOp)         => compareOperation(op, ExpressionValue(lOp), ExpressionValue(rOp))
+      case CompositeConditionExecutable(pred, lCond, rCond) => composeConditions(pred, lCond, rCond)
     }
   }
 
@@ -78,18 +84,3 @@ case class RuleImpl(
     }
   }
 }
-
-abstract class ConditionImpl extends Condition
-case class CompareConditionImpl(operation: Operations.Operation, leftOperand: ExpressionParameterValueImpl, rightOperand: ExpressionParameterValueImpl) extends ConditionImpl {
-
-}
-
-case class CompositeConditionImpl(predicate: Predicates.Predicate, leftCondition: ConditionImpl, rightCondition: ConditionImpl) extends ConditionImpl {
-
-}
-
-abstract class ExpressionParameterValueImpl extends ExpressionParameterValue
-case class AttributeParameterValueImpl(id: String) extends ExpressionParameterValueImpl
-case class BoolParameterValueImpl(value: Boolean) extends ExpressionParameterValueImpl
-case class IntParameterValueImpl(value: Int) extends ExpressionParameterValueImpl
-case class StringParameterValueImpl(value: String) extends ExpressionParameterValueImpl

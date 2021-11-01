@@ -3,7 +3,13 @@ package com.example.accesscontrol.api.impl.domain
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
 
-case class PolicyImpl(target: TargetType, combiningAlgorithm: CombiningAlgorithms.Algorithm, rules: Array[RuleImpl]) extends Policy {
+object PolicyExecutable {
+  def convert: PartialFunction[Policy, PolicyExecutable] = {
+    case p: Policy => PolicyExecutable(p.target, p.combiningAlgorithm, p.rules map RuleExecutable.convert)
+  }
+}
+
+case class PolicyExecutable(target: TargetType, combiningAlgorithm: CombiningAlgorithms.Algorithm, rules: Array[RuleExecutable]) extends Policy {
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
   def makeDecision(attributes: Array[Attribute]): Future[Decision] = {

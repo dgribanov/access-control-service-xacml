@@ -52,6 +52,16 @@ object CombiningAlgorithms extends Enumeration {
 }
 
 trait Condition
+trait CompareCondition extends Condition {
+  val operation: Operations.Operation
+  val leftOperand: ExpressionParameterValue
+  val rightOperand: ExpressionParameterValue
+}
+trait CompositeCondition extends Condition {
+  val predicate: Predicates.Predicate
+  val leftCondition: Condition
+  val rightCondition: Condition
+}
 
 // todo move to data
 object Operations extends Enumeration {
@@ -85,3 +95,15 @@ object EffectDecisions extends Enumeration {
 }
 
 trait ExpressionParameterValue
+trait AttributeParameterValue extends ExpressionParameterValue {
+  val id: String
+}
+trait BoolParameterValue extends ExpressionParameterValue {
+  val value: Boolean
+}
+trait IntParameterValue extends ExpressionParameterValue {
+  val value: Int
+}
+trait StringParameterValue extends ExpressionParameterValue {
+  val value: String
+}
