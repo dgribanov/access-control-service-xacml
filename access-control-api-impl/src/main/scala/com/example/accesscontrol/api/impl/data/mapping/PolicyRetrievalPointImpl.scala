@@ -20,7 +20,10 @@ import com.example.accesscontrol.api.impl.domain.{
   IntParameterValue,
   StringParameterValue,
   CompareCondition,
-  CompositeCondition
+  CompositeCondition,
+  ObjectTypeTarget,
+  ActionTypeTarget,
+  AttributeTypeTarget
 }
 import play.api.libs.json.{Format, JsError, JsSuccess, Json}
 
@@ -65,20 +68,20 @@ object RuleSerializable {
 case class RuleSerializable(target: TargetTypeSerializable, condition: ConditionSerializable, positiveEffect: PositiveEffect, negativeEffect: NegativeEffect) extends Rule
 
 abstract class TargetTypeSerializable extends TargetType
-case class ObjectTypeTarget(value: String) extends TargetTypeSerializable
-case class ActionTypeTarget(value: String) extends TargetTypeSerializable
-case class AttributeTypeTarget(value: String) extends TargetTypeSerializable
+case class ObjectTypeTargetSerializable(value: String) extends TargetTypeSerializable with ObjectTypeTarget
+case class ActionTypeTargetSerializable(value: String) extends TargetTypeSerializable with ActionTypeTarget
+case class AttributeTypeTargetSerializable(value: String) extends TargetTypeSerializable with AttributeTypeTarget
 
-object ObjectTypeTarget {
-  implicit val format: Format[ObjectTypeTarget] = Json.format[ObjectTypeTarget]
+object ObjectTypeTargetSerializable {
+  implicit val format: Format[ObjectTypeTargetSerializable] = Json.format[ObjectTypeTargetSerializable]
 }
 
-object ActionTypeTarget {
-  implicit val format: Format[ActionTypeTarget] = Json.format[ActionTypeTarget]
+object ActionTypeTargetSerializable {
+  implicit val format: Format[ActionTypeTargetSerializable] = Json.format[ActionTypeTargetSerializable]
 }
 
-object AttributeTypeTarget {
-  implicit val format: Format[AttributeTypeTarget] = Json.format[AttributeTypeTarget]
+object AttributeTypeTargetSerializable {
+  implicit val format: Format[AttributeTypeTargetSerializable] = Json.format[AttributeTypeTargetSerializable]
 }
 
 object TargetTypeSerializable {
@@ -91,32 +94,32 @@ object TargetTypeSerializable {
       valueType.fold(
         _ => JsError("type undefined or incorrect"),
         {
-          case "ObjectTypeTarget"    => JsPath.read[ObjectTypeTarget].reads(js)
-          case "ActionTypeTarget"    => JsPath.read[ActionTypeTarget].reads(js)
-          case "AttributeTypeTarget" => JsPath.read[AttributeTypeTarget].reads(js)
+          case "ObjectTypeTarget"    => JsPath.read[ObjectTypeTargetSerializable].reads(js)
+          case "ActionTypeTarget"    => JsPath.read[ActionTypeTargetSerializable].reads(js)
+          case "AttributeTypeTarget" => JsPath.read[AttributeTypeTargetSerializable].reads(js)
         }
       )
     },
     Writes {
-      case target: ObjectTypeTarget =>
+      case target: ObjectTypeTargetSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("ObjectTypeTarget"),
-            "id"    -> ObjectTypeTarget.format.writes(target)
+            "id"    -> ObjectTypeTargetSerializable.format.writes(target)
           )
         )
-      case target: ActionTypeTarget =>
+      case target: ActionTypeTargetSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("ActionTypeTarget"),
-            "value" -> ActionTypeTarget.format.writes(target)
+            "value" -> ActionTypeTargetSerializable.format.writes(target)
           )
         )
-      case target: AttributeTypeTarget =>
+      case target: AttributeTypeTargetSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("AttributeTypeTarget"),
-            "value" -> AttributeTypeTarget.format.writes(target)
+            "value" -> AttributeTypeTargetSerializable.format.writes(target)
           )
         )
     }
@@ -145,8 +148,8 @@ object ConditionSerializable {
       valueType.fold(
         _ => JsError("type undefined or incorrect"),
         {
-          case "CompareConditionSerializable"   => JsPath.read[CompareConditionSerializable].reads(js)
-          case "CompositeConditionSerializable" => JsPath.read[CompositeConditionSerializable].reads(js)
+          case "CompareCondition"   => JsPath.read[CompareConditionSerializable].reads(js)
+          case "CompositeCondition" => JsPath.read[CompositeConditionSerializable].reads(js)
         }
       )
     },
@@ -154,7 +157,7 @@ object ConditionSerializable {
       case condition: CompareConditionSerializable =>
         JsObject(
           Seq(
-            "_type"        -> JsString("CompareConditionSerializable"),
+            "_type"        -> JsString("CompareCondition"),
             "operation"    -> CompareConditionSerializable.format.writes(condition),
             "leftOperand"  -> CompareConditionSerializable.format.writes(condition),
             "rightOperand" -> CompareConditionSerializable.format.writes(condition)
@@ -163,7 +166,7 @@ object ConditionSerializable {
       case condition: CompositeConditionSerializable =>
         JsObject(
           Seq(
-            "_type"          -> JsString("CompositeConditionSerializable"),
+            "_type"          -> JsString("CompositeCondition"),
             "predicate"      -> CompositeConditionSerializable.format.writes(condition),
             "leftCondition"  -> CompositeConditionSerializable.format.writes(condition),
             "rightCondition" -> CompositeConditionSerializable.format.writes(condition)

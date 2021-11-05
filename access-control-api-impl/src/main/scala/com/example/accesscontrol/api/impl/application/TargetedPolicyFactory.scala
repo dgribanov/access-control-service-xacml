@@ -1,8 +1,16 @@
 package com.example.accesscontrol.api.impl.application
 
-// todo remove wrong dependency
-import com.example.accesscontrol.api.impl.data.mapping.{ActionTypeTarget, AttributeTypeTarget, ObjectTypeTarget}
-import com.example.accesscontrol.api.impl.domain.{PolicyCollection, PolicyCollectionExecutable, Target, TargetType, TargetedPolicy, TargetedPolicyExecutable}
+import com.example.accesscontrol.api.impl.domain.{
+  PolicyCollection,
+  PolicyCollectionExecutable,
+  Target,
+  TargetType,
+  TargetedPolicy,
+  TargetedPolicyExecutable,
+  ObjectTypeTarget,
+  ActionTypeTarget,
+  AttributeTypeTarget
+}
 
 final class TargetedPolicyFactory {
   def createTargetedPolicy(target: Target, policyCollection: PolicyCollection): Option[TargetedPolicy] = {
@@ -22,9 +30,9 @@ final class TargetedPolicyFactory {
 
   private def targetMatcher(checkTarget: Target, obj: {val target: TargetType}): Boolean = {
     obj.target match {
-      case ObjectTypeTarget(value: String) => value == checkTarget.objectType
-      case ActionTypeTarget(value: String) => value == checkTarget.action
-      case AttributeTypeTarget(_)          => false
+      case t: ObjectTypeTarget    => t.value == checkTarget.objectType
+      case t: ActionTypeTarget    => t.value == checkTarget.action
+      case _: AttributeTypeTarget => false
     }
   }
 }

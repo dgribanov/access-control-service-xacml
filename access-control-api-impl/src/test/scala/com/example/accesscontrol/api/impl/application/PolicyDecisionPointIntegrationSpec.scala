@@ -28,12 +28,12 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   info("Как сервис, управляющий продажей и арендой велосипедов, самокатов и скейтов, я хочу проверить доступ пользователя к основным действиям с моими товарами.")
 
-  Feature("(0) Танки:") {
-    Scenario("(0.1) Пользователь #1 хочет покататься на танке #1") {
+  Feature("(0) Вертолёт:") {
+    Scenario("(0.1) Пользователь #1 хочет полетать на вертолёте") {
       val targets = Array(new TestTarget("tank", 1, "ride").asInstanceOf[Target])
 
-      Given("** у пользователя ЕСТЬ право кататься на танке (он танкист)")
-      val attributes = Array(new TestAttribute("permissionToRideBicycle", new TestAttributeValue(true)).asInstanceOf[Attribute])
+      Given("** у пользователя ЕСТЬ право летать на вертолёте")
+      val attributes = Array(new TestAttribute("permissionToFlyHelicopter", new TestAttributeValue(true)).asInstanceOf[Attribute])
 
       When(">>> запрашиваем проверку доступа")
       val decisions = PolicyDecisionPointImpl(policyRetrievalPoint, targetedPolicyFactory).makeDecision(targets, attributes)
@@ -41,7 +41,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       Then("<<< видим, что проверка доступа удалась, ошибок нет")
       decisions map { decision => assert(decision.isInstanceOf[Right[_, Array[_]]]) }
 
-      Then("<<< убеждаемся, что проверка доступа НЕ ПРИМЕНИМА для объекта `танк`, МЫ МИРНЫЕ ЛЮДИ, У НАС НЕТ ТАНКОВ!")
+      Then("<<< убеждаемся, что проверка доступа НЕ ПРИМЕНИМА для объекта `вертолёт`")
       assertDecision(decisions, nonApplicable = true)
     }
   }

@@ -28,6 +28,9 @@ trait PolicySet {
 trait TargetType {
   val value: String
 }
+trait ObjectTypeTarget extends TargetType
+trait ActionTypeTarget extends TargetType
+trait AttributeTypeTarget extends TargetType
 
 trait Policy {
   val target: TargetType
