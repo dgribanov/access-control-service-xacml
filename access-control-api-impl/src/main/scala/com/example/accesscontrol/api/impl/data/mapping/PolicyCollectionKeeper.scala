@@ -16,15 +16,15 @@ class PolicyCollectionKeeper extends Actor {
   import PolicyCollectionKeeper._
   private val log = Logging.getLogger(context.system, this)
 
-  private var policyCollection: Option[PolicyCollectionSerializable] = None
+  private val policyCollection: Option[PolicyCollectionSerializable] = None
 
-  override def receive = {
+  override def receive = onMessage(policyCollection)
+
+  private def onMessage(policyCollection: Option[PolicyCollectionSerializable]): Receive = {
     case RegistryPolicyCollection(p) =>
       log.info("Registry policy collection: {}", p)
-      policyCollection = Some(p)
-      this
+      context.become(onMessage(Some(p)))
     case _: FetchPolicyCollection =>
       sender ! policyCollection
-      this
   }
 }
