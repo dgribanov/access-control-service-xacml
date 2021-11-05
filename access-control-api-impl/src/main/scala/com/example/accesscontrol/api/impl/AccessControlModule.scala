@@ -10,7 +10,7 @@ import net.codingwell.scalaguice.ScalaModule
 class AccessControlModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {
     bind[PolicyDecisionPoint].to[PolicyDecisionPointImpl]
-    bind[PolicyRetrievalPoint].to[PolicyRetrievalPointImpl]
+    bind[PolicyRetrievalPoint].to[PolicyRetrievalPointImpl].asEagerSingleton()
     bind[PolicyRepository].to[PolicyRepositoryImpl]
     bind[TargetedPolicyFactory]
   }

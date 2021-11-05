@@ -7,7 +7,7 @@ import scala.concurrent.Future
 trait PolicyRetrievalPoint {
   case class PolicyCollectionParsingError(errorMessage: String) extends RuntimeException
 
-  def buildPolicyCollection(): Future[Either[PolicyCollectionParsingError, PolicyCollection]]
+  def fetchPolicyCollection(): Future[Option[PolicyCollection]]
 }
 
 trait TargetedPolicy {

@@ -22,9 +22,9 @@ final case class PolicyDecisionPointImpl @Inject()(
   def makeDecision(
     targets: Array[Target],
     attributes: Array[Attribute]
-  ): Future[Either[RuntimeException, Array[TargetedDecision]]] = {
-    policyRetrievalPoint.buildPolicyCollection().map({
-      case Right(policyCollection) => Right(
+  ): Future[Either[PolicyCollectionFetchingError, Array[TargetedDecision]]] = {
+    policyRetrievalPoint.fetchPolicyCollection().map({
+      case Some(policyCollection) => Right(
         targets.map(
           target => TargetedDecision(
             target,
@@ -39,7 +39,7 @@ final case class PolicyDecisionPointImpl @Inject()(
           )
         )
       )
-      case Left(error) => Left(error)
+      case None => Left(PolicyCollectionFetchingError("Can`t fetch policy collection"))
     })
   }
 }

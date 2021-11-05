@@ -16,8 +16,10 @@ trait AttributeValue {
 }
 
 trait PolicyDecisionPoint {
+  case class PolicyCollectionFetchingError(errorMessage: String) extends RuntimeException
+
   def makeDecision(
     targets: Array[Target],
     attributes: Array[Attribute]
-  ): Future[Either[RuntimeException, Array[TargetedDecision]]]
+  ): Future[Either[PolicyCollectionFetchingError, Array[TargetedDecision]]]
 }
