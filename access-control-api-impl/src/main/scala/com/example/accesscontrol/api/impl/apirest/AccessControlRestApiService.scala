@@ -1,6 +1,12 @@
 package com.example.accesscontrol.api.impl.apirest
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.implicitConversions
+
 import akka.NotUsed
+import com.lightbend.lagom.scaladsl.api.ServiceCall
+
 import com.example.accesscontrol.api.impl.domain.{
   AttributeValue,
   Target,
@@ -18,11 +24,6 @@ import com.example.accesscontrol.rest.api.{
   ResultedDecision => ApiResultedDecision,
   Target => ApiTarget
 }
-import com.lightbend.lagom.scaladsl.api.ServiceCall
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.language.implicitConversions
 
 class TargetImpl (val objectType: String, val objectId: Int, val action: String) extends Target
 class AttributeImpl (val name: String, val value: AttributeValue) extends Attribute
@@ -62,16 +63,13 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisio
     requestAttributes: Array[ApiAttribute]
   ): Array[Attribute] = requestAttributes.map(a => new AttributeImpl(a.name, new AttributeValueImpl(a.value.value))).asInstanceOf[Array[Attribute]]
 
-  private def convertToResponse(targetedDecisions: Either[RuntimeException, Array[TargetedDecision]]): ApiAccessControlResponse = {
-    targetedDecisions match {
-      case Right(targetedDecisions) => toSuccessResponse(targetedDecisions)
-      case Left(error)              => toError(error)
-    }
+  private def convertToResponse(targetedDecisions: List[TargetedDecision]): ApiAccessControlResponse = {
+    toSuccessResponse(targetedDecisions)
   }
 
-  private def toSuccessResponse(targetedDecisions: Array[TargetedDecision]): ApiAccessControlSuccessResponse = {
+  private def toSuccessResponse(targetedDecisions: List[TargetedDecision]): ApiAccessControlSuccessResponse = {
     val decisions = targetedDecisions map createResultedDecision
-    ApiAccessControlSuccessResponse(decisions)
+    ApiAccessControlSuccessResponse(decisions.toArray)
   }
 
   private def toError(error: RuntimeException): ApiAccessControlError = ApiAccessControlError(error.getMessage)
@@ -79,7 +77,7 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisio
   private def createResultedDecision(targetedDecision: TargetedDecision): ApiResultedDecision = {
     // block main thread while decision is completed
     // todo think more about non block conversation
-    val decision = Await.result(targetedDecision.decision, 10.seconds)
+    val decision = Await.result(targetedDecision.decision, 1.nanosecond)
 
     ApiResultedDecision(
       targetedDecision.target.objectType,

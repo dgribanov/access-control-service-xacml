@@ -8,6 +8,8 @@ trait PolicyRetrievalPoint {
   case class PolicyCollectionParsingError(errorMessage: String) extends RuntimeException
 
   def fetchPolicyCollection(): Future[Option[PolicyCollection]]
+  def fetchPolicySet(target: TargetType): Future[Option[PolicySet]]
+  def fetchPolicy(policySetTarget: TargetType, policyTarget: TargetType): Future[Option[Policy]]
 }
 
 trait TargetedPolicy {
