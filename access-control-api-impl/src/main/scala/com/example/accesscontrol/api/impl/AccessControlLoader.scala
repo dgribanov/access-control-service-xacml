@@ -15,17 +15,17 @@ class AccessControlLoader extends LagomApplicationLoader {
   private implicit val module: Module = new AccessControlModule
 
   override def load(context: LagomApplicationContext): LagomApplication =
-    new AccessControlApplication(context) {
+    new AccessControlApiApplication(context) {
       override def serviceLocator: NoServiceLocator.type = NoServiceLocator
     }
 
   override def loadDevMode(context: LagomApplicationContext): LagomApplication =
-    new AccessControlApplication(context) with LagomDevModeComponents
+    new AccessControlApiApplication(context) with LagomDevModeComponents
 
   override def describeService: Some[Descriptor] = Some(readDescriptor[AccessControlService])
 }
 
-abstract class AccessControlApplication(context: LagomApplicationContext)(private implicit val module: Module)
+abstract class AccessControlApiApplication(context: LagomApplicationContext)(private implicit val module: Module)
   extends LagomApplication(context)
     with AhcWSComponents {
   private val serviceInjector: ServiceInjector = new ServiceInjector

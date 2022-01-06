@@ -1,7 +1,7 @@
 package com.example.accesscontrol.api.impl.apirest
 
 import com.example.accesscontrol.api.impl.{
-  AccessControlApplication,
+  AccessControlApiApplication,
   BaseAcceptanceSpec,
   TestAccessControlModule
 }
@@ -16,9 +16,14 @@ import com.lightbend.lagom.scaladsl.server.LocalServiceLocator
 import com.lightbend.lagom.scaladsl.testkit.ServiceTest
 
 class AccessControlRestApiServiceAcceptanceSpec extends BaseAcceptanceSpec {
+  /**
+   * Run server once for all tests in spec and stop it after tests are completed.
+   * Look at another way of up and down server for each test in Lagom documentation:
+   * https://www.lagomframework.com/documentation/1.6.x/scala/TestingServices.html#How-to-test-one-service
+   */
   lazy private implicit val module: TestAccessControlModule = new TestAccessControlModule
   lazy private val server = ServiceTest.startServer(ServiceTest.defaultSetup) { ctx =>
-    new AccessControlApplication(ctx) with LocalServiceLocator
+    new AccessControlApiApplication(ctx) with LocalServiceLocator
   }
 
   lazy val client: AccessControlService = server.serviceClient.implement[AccessControlService]
