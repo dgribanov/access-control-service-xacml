@@ -5,6 +5,7 @@ import akka.cluster.sharding.typed.scaladsl._
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.Effect
+import akka.persistence.typed.scaladsl.Effect.reply
 import akka.persistence.typed.scaladsl.ReplyEffect
 import akka.persistence.typed.scaladsl.RetentionCriteria
 
@@ -21,13 +22,15 @@ import play.api.libs.json._
 
 
 object PolicyCollection {
-  final val version: String = "v1"
+  final val version: String = "0.0.1"
 
   trait CommandSerializable
 
   sealed trait Command extends CommandSerializable
 
   final case class RegisterPolicySet(policySet: PolicySetSerializable, replyTo: ActorRef[Confirmation]) extends Command
+
+  final case class ReadPolicyCollection(replyTo: ActorRef[PolicyCollection]) extends Command
 
   sealed trait Event extends AggregateEvent[Event] {
     override def aggregateTag: AggregateEventTagger[Event] = Event.Tag
@@ -69,7 +72,7 @@ object PolicyCollection {
     }
   }
 
-  val empty: PolicyCollection = PolicyCollection(policySets = Map.empty)
+  def empty(id: String): PolicyCollection = PolicyCollection(id, policySets = Map.empty)
 
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("PolicyCollection")
 
@@ -77,7 +80,7 @@ object PolicyCollection {
     EventSourcedBehavior
       .withEnforcedReplies[Command, Event, PolicyCollection](
         persistenceId = persistenceId,
-        emptyState = PolicyCollection.empty,
+        emptyState = PolicyCollection.empty(persistenceId.id), // TODO generate PolicyCollection ID
         commandHandler = (policyCollection, cmd) => policyCollection.applyCommand(cmd),
         eventHandler = (policyCollection, evt) => policyCollection.applyEvent(evt)
       )
@@ -98,12 +101,13 @@ object PolicyCollection {
   implicit val policyCollectionFormat: Format[PolicyCollection] = Json.format
 }
 
-final case class PolicyCollection(policySets: Map[String, PolicySetSerializable]) {
+final case class PolicyCollection(id: String, policySets: Map[String, PolicySetSerializable]) {
   import PolicyCollection._
 
   def applyCommand(command: Command): ReplyEffect[Event, PolicyCollection] =
     command match {
-      case RegisterPolicySet(policySet, replyTo) => onRegisterPolicySet(policySet, replyTo)
+      case RegisterPolicySet(policySet, replyTo)  => onRegisterPolicySet(policySet, replyTo)
+      case ReadPolicyCollection(replyTo)          => onReadPolicyCollection(replyTo)
     }
 
   private def onRegisterPolicySet(
@@ -115,7 +119,11 @@ final case class PolicyCollection(policySets: Map[String, PolicySetSerializable]
     else
       Effect
         .persist(PolicySetRegistered(policySet))
-        .thenReply(replyTo)(policyCollection => Accepted(Summary(policySet)))
+        .thenReply(replyTo)(_ => Accepted(Summary(policySet)))
+  }
+
+  private def onReadPolicyCollection(replyTo: ActorRef[PolicyCollection]): ReplyEffect[Event, PolicyCollection] = {
+      reply(replyTo)(copy())
   }
 
   def applyEvent(event: Event): PolicyCollection =

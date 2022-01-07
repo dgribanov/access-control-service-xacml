@@ -42,7 +42,7 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisio
   override def check(subject: String, id: String): ServiceCall[ApiAccessControlRequest, ApiAccessControlResponse] = ServiceCall {
     request => {
       policyDecisionPoint
-        .makeDecision(request.targets, request.attributes)
+        .makeDecision(subject, id, request.targets, request.attributes)
         .map[ApiAccessControlResponse](this.convertToResponse)
     }
   }

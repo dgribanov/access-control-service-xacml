@@ -16,7 +16,7 @@ import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraPersistenceCo
 import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
 
 
-class AccessControlLoader extends LagomApplicationLoader {
+class AccessControlAdminLoader extends LagomApplicationLoader {
   override def load(context: LagomApplicationContext): LagomApplication =
     new AccessControlAdminApplication(context) {
       override def serviceLocator: NoServiceLocator.type = NoServiceLocator
@@ -38,9 +38,6 @@ abstract class AccessControlAdminApplication(context: LagomApplicationContext)
   // Register the JSON serializer registry
   override lazy val jsonSerializerRegistry: JsonSerializerRegistry =
     PolicyCollectionSerializerRegistry
-
-
-  //private implicit val clusterSharding: ActorRef[ShardingEnvelope[PolicyCollection.Command]] =
 
   // Initialize the sharding for the ShoppingCart aggregate.
   // See https://doc.akka.io/docs/akka/2.6/typed/cluster-sharding.html

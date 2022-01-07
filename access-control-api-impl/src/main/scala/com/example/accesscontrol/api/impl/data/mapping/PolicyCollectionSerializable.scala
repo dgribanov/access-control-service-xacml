@@ -30,7 +30,7 @@ object PolicyCollectionSerializable {
   implicit val format: Format[PolicyCollectionSerializable] = Json.format[PolicyCollectionSerializable]
 }
 
-case class PolicyCollectionSerializable(policySets: Array[PolicySetSerializable]) extends PolicyCollection
+case class PolicyCollectionSerializable(id: String, version: String, policySets: Array[PolicySetSerializable]) extends PolicyCollection
 
 object PolicySetSerializable {
   implicit val format: Format[PolicySetSerializable] = Json.format[PolicySetSerializable]

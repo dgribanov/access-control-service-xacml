@@ -18,12 +18,15 @@ final case class PolicyDecisionPointImpl @Inject()(policyRetrievalPoint: PolicyR
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
 
   def makeDecision(
+    subject: String,
+    id: String,
     targets: Array[Target],
     attributes: Array[Attribute]
   ): Future[List[TargetedDecision]] = {
     Future.sequence(
       targets.map(
         target => policyRetrievalPoint.fetchPolicy(
+          subject,
           createTargetType(target.objectType),
           createTargetType(target.action),
         ).map({

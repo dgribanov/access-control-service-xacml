@@ -21,6 +21,8 @@ trait PolicyDecisionPoint {
   case class PolicyFetchingError(errorMessage: String) extends RuntimeException
 
   def makeDecision(
+    subject: String,
+    id: String,
     targets: Array[Target],
     attributes: Array[Attribute]
   ): Future[List[TargetedDecision]]

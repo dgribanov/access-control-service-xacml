@@ -11,7 +11,7 @@ import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
 import play.api.libs.ws.ahc.AhcWSComponents
 import com.softwaremill.macwire._
 
-class AccessControlLoader extends LagomApplicationLoader {
+class AccessControlApiLoader extends LagomApplicationLoader {
   private implicit val module: Module = new AccessControlModule
 
   override def load(context: LagomApplicationContext): LagomApplication =
