@@ -10,6 +10,7 @@ trait PolicyRetrievalPoint {
   def fetchPolicyCollection(subject: String): Future[Option[PolicyCollection]]
   def fetchPolicySet(subject: String, target: TargetType): Future[Option[PolicySet]]
   def fetchPolicy(subject: String, policySetTarget: TargetType, policyTarget: TargetType): Future[Option[Policy]]
+  def registerPolicyCollection(policyCollection: PolicyCollection): Unit
 }
 
 trait TargetedPolicy {

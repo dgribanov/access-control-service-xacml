@@ -1,15 +1,19 @@
 package com.example.accesscontrol.api.impl
 
+import com.example.accesscontrol.admin.ws.rest.api.AccessControlAdminWsService
 import com.example.accesscontrol.api.impl.apirest.AccessControlRestApiService
-import com.example.accesscontrol.api.impl.domain.PolicyDecisionPoint
+import com.example.accesscontrol.api.impl.domain.{PolicyDecisionPoint, PolicyRecorder}
 import com.example.accesscontrol.rest.api.AccessControlService
-import com.google.inject.Module
-import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
+
 import com.lightbend.lagom.scaladsl.api.Descriptor
-import com.lightbend.lagom.scaladsl.server._
+import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
-import play.api.libs.ws.ahc.AhcWSComponents
+import com.lightbend.lagom.scaladsl.server._
+import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaClientComponents
+
+import com.google.inject.Module
 import com.softwaremill.macwire._
+import play.api.libs.ws.ahc.AhcWSComponents
 
 class AccessControlApiLoader extends LagomApplicationLoader {
   private implicit val module: Module = new AccessControlModule
@@ -26,11 +30,18 @@ class AccessControlApiLoader extends LagomApplicationLoader {
 }
 
 abstract class AccessControlApiApplication(context: LagomApplicationContext)(private implicit val module: Module)
-  extends LagomApplication(context)
+    extends LagomApplication(context)
+    with LagomKafkaClientComponents
     with AhcWSComponents {
+
   private val serviceInjector: ServiceInjector = new ServiceInjector
   private implicit val policyDecisionPoint: PolicyDecisionPoint = serviceInjector.inject[PolicyDecisionPoint]
+  private implicit val policyRecorder: PolicyRecorder = serviceInjector.inject[PolicyRecorder]
 
   // Bind the service that this server provides
   override lazy val lagomServer: LagomServer = serverFor[AccessControlService](wire[AccessControlRestApiService])
+
+  // Bind the AccessControlAdminWsService client
+  lazy val accessControlAdminWsService: AccessControlAdminWsService =
+    serviceClient.implement[AccessControlAdminWsService]
 }

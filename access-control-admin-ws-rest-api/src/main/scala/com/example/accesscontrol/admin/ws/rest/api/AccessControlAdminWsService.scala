@@ -18,11 +18,11 @@ trait AccessControlAdminWsService extends Service {
   /**
    * Example: curl -H "Content-Type: application/json" -X POST
    *
-   * http://localhost:9000/api/access-control-admin/register-policy-set
+   * http://localhost:9000/api/access-control-admin/policy-collection/:id/policy-set
    */
-  def registerPolicySet: ServiceCall[RegisterPolicySetCommand, PolicySetRegisteredResponse]
+  def registerPolicySet(id: String): ServiceCall[RegisterPolicySetCommand, PolicySetRegisteredResponse]
 
-  def sendPolicySetRegisteredEventMessage: Topic[PolicySetRegisteredEvent]
+  def policyEventsTopic: Topic[PolicyEvent]
 
   override final def descriptor: Descriptor = {
     import Service._
@@ -30,24 +30,51 @@ trait AccessControlAdminWsService extends Service {
     named("access-control-admin")
       .withCalls(
         restCall(Method.GET, "/healthcheck/access-control-admin", healthcheck),
-        restCall(Method.POST, "api/access-control-admin/register-policy-set", registerPolicySet),
+        restCall(Method.POST, "/api/access-control-admin/policy-collection/:id/policy-set", registerPolicySet _),
       )
       .withTopics(
-        topic(AccessControlAdminWsService.TOPIC_NAME, sendPolicySetRegisteredEventMessage)
+        topic(AccessControlAdminWsService.TOPIC_NAME, policyEventsTopic)
       )
       .withAutoAcl(true)
     // @formatter:on
   }
 }
 
-final case class PolicySetRegisteredResponse(version: String, policySet: PolicySet)
+final case class PolicySetRegisteredResponse(id: String, policySet: PolicySet)
 
 object PolicySetRegisteredResponse {
   implicit val format: Format[PolicySetRegisteredResponse] = Json.format
 }
 
-final case class PolicySetRegisteredEvent(policyCollection: PolicyCollection)
+abstract class PolicyEvent
+final case class PolicyCollectionRegisteredEvent(policyCollection: PolicyCollection) extends PolicyEvent
 
-object PolicySetRegisteredEvent {
-  implicit val format: Format[PolicySetRegisteredEvent] = Json.format
+object PolicyCollectionRegisteredEvent {
+  implicit val format: Format[PolicyCollectionRegisteredEvent] = Json.format
+}
+
+object PolicyEvent {
+  import play.api.libs.json.{Reads, Writes, JsPath, JsError, JsObject, JsString}
+
+  implicit val format: Format[PolicyEvent] = Format[PolicyEvent] (
+    Reads { js =>
+      // use the _type field to determine how to deserialize
+      val valueType = (JsPath \ "_type").read[String].reads(js)
+      valueType.fold(
+        _ => JsError("type undefined or incorrect"),
+        {
+          case "PolicyCollectionRegisteredEvent" => JsPath.read[PolicyCollectionRegisteredEvent].reads(js)
+        }
+      )
+    },
+    Writes {
+      case event: PolicyCollectionRegisteredEvent =>
+        JsObject(
+          Seq(
+            "_type" -> JsString("PolicyCollectionRegisteredEvent"),
+            "id"    -> PolicyCollectionRegisteredEvent.format.writes(event)
+          )
+        )
+    }
+  )
 }

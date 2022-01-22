@@ -35,16 +35,16 @@ class AccessControlAdminWsServiceImpl(
       Future.successful("Hi from Access Control!")
   }
 
-  override def registerPolicySet: ServiceCall[api.RegisterPolicySetCommand, api.PolicySetRegisteredResponse] = ServiceCall {
+  override def registerPolicySet(id: String): ServiceCall[api.RegisterPolicySetCommand, api.PolicySetRegisteredResponse] = ServiceCall {
     command =>
-      entityRef(PolicyCollection.version)
+      entityRef(id)
         .ask(reply => RegisterPolicySet(command.policySet.asInstanceOf[PolicySetSerializable], reply))
         .map { confirmation =>
           confirmationToResponse(confirmation)
         }
   }
 
-  override def sendPolicySetRegisteredEventMessage: Topic[api.PolicySetRegisteredEvent] =
+  override def policyEventsTopic: Topic[api.PolicyEvent] =
     TopicProducer.taggedStreamWithOffset(Event.Tag) {
       (tag, fromOffset) =>
         persistentEntityRegistry
@@ -64,10 +64,10 @@ class AccessControlAdminWsServiceImpl(
 
   private def convertToResponse(summary: Summary): api.PolicySetRegisteredResponse =
     api.PolicySetRegisteredResponse(
-      PolicyCollection.version,
+      summary.id,
       summary.policySet.asInstanceOf[PolicySet]
     )
 
-  private def convertToMessage(policyCollection: PolicyCollection): api.PolicySetRegisteredEvent =
-    api.PolicySetRegisteredEvent(policyCollection.asInstanceOf[api.PolicyCollection])
+  private def convertToMessage(policyCollection: PolicyCollection): api.PolicyCollectionRegisteredEvent =
+    api.PolicyCollectionRegisteredEvent(policyCollection.asInstanceOf[api.PolicyCollection])
 }

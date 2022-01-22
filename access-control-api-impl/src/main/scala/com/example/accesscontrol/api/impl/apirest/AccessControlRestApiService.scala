@@ -1,18 +1,19 @@
 package com.example.accesscontrol.api.impl.apirest
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.language.implicitConversions
-
-import akka.NotUsed
-import com.lightbend.lagom.scaladsl.api.ServiceCall
-
+import com.example.accesscontrol.admin.ws.rest.api.{
+  AccessControlAdminWsService,
+  PolicyEvent,
+  PolicyCollectionRegisteredEvent,
+  PolicyCollection => AdminPolicyCollection
+}
 import com.example.accesscontrol.api.impl.domain.{
-  AttributeValue,
-  Target,
+  PolicyRecorder,
   Attribute,
+  AttributeValue,
+  PolicyDecisionPoint,
+  Target,
   TargetedDecision,
-  PolicyDecisionPoint
+  PolicyCollection
 }
 import com.example.accesscontrol.rest.api.{
   AccessControlError => ApiAccessControlError,
@@ -25,6 +26,14 @@ import com.example.accesscontrol.rest.api.{
   Target => ApiTarget
 }
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.implicitConversions
+import akka.Done
+import akka.NotUsed
+import akka.stream.scaladsl.Flow
+import com.lightbend.lagom.scaladsl.api.ServiceCall
+
 class TargetImpl (val objectType: String, val objectId: Int, val action: String) extends Target
 class AttributeImpl (val name: String, val value: AttributeValue) extends Attribute
 class AttributeValueImpl (val value: Any) extends AttributeValue
@@ -32,7 +41,14 @@ class AttributeValueImpl (val value: Any) extends AttributeValue
 /**
  * Implementation of the AccessControlService.
  */
-class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisionPoint: PolicyDecisionPoint) extends ApiAccessControlService {
+class AccessControlRestApiService(
+  accessControlAdminWsService: AccessControlAdminWsService
+)(
+  implicit ec: ExecutionContext,
+  policyDecisionPoint: PolicyDecisionPoint,
+  policyRecorder: PolicyRecorder
+) extends ApiAccessControlService {
+  handlePolicyEvents()
 
   override def healthcheck: ServiceCall[NotUsed, String] = ServiceCall {
     _ =>
@@ -85,4 +101,16 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisio
       decision.toString,
     )
   }
+
+  private def handlePolicyEvents(): Unit =
+    accessControlAdminWsService.policyEventsTopic.subscribe.atLeastOnce(Flow[PolicyEvent].map { event =>
+      event match {
+        case PolicyCollectionRegisteredEvent(policyCollection) => policyRecorder.registerPolicyCollection(policyCollection)
+      }
+      Done
+    })
+
+  implicit def convertAdminPolicyCollectionToDomainPolicyCollection(
+    adminPolicyCollection: AdminPolicyCollection
+  ): PolicyCollection = adminPolicyCollection.asInstanceOf[PolicyCollection]
 }

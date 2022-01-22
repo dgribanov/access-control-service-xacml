@@ -22,8 +22,6 @@ import play.api.libs.json._
 
 
 object PolicyCollection {
-  final val version: String = "0.0.1"
-
   trait CommandSerializable
 
   sealed trait Command extends CommandSerializable
@@ -47,7 +45,7 @@ object PolicyCollection {
   implicit val policySetRegisteredFormat: Format[PolicySetRegistered] = Json.format
 
 
-  final case class Summary(policySet: PolicySetSerializable)
+  final case class Summary(id: String, policySet: PolicySetSerializable)
   sealed trait Confirmation
 
   final case class Accepted(summary: Summary) extends Confirmation
@@ -72,7 +70,7 @@ object PolicyCollection {
     }
   }
 
-  def empty(id: String): PolicyCollection = PolicyCollection(id, policySets = Map.empty)
+  def empty: PolicyCollection = PolicyCollection(None, policySets = Map.empty)
 
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("PolicyCollection")
 
@@ -80,7 +78,7 @@ object PolicyCollection {
     EventSourcedBehavior
       .withEnforcedReplies[Command, Event, PolicyCollection](
         persistenceId = persistenceId,
-        emptyState = PolicyCollection.empty(persistenceId.id), // TODO generate PolicyCollection ID
+        emptyState = PolicyCollection.empty,
         commandHandler = (policyCollection, cmd) => policyCollection.applyCommand(cmd),
         eventHandler = (policyCollection, evt) => policyCollection.applyEvent(evt)
       )
@@ -101,7 +99,7 @@ object PolicyCollection {
   implicit val policyCollectionFormat: Format[PolicyCollection] = Json.format
 }
 
-final case class PolicyCollection(id: String, policySets: Map[String, PolicySetSerializable]) {
+final case class PolicyCollection(id: Option[String], policySets: Map[String, PolicySetSerializable]) {
   import PolicyCollection._
 
   def applyCommand(command: Command): ReplyEffect[Event, PolicyCollection] =
@@ -119,7 +117,7 @@ final case class PolicyCollection(id: String, policySets: Map[String, PolicySetS
     else
       Effect
         .persist(PolicySetRegistered(policySet))
-        .thenReply(replyTo)(_ => Accepted(Summary(policySet)))
+        .thenReply(replyTo)(_ => Accepted(Summary(id.get, policySet)))
   }
 
   private def onReadPolicyCollection(replyTo: ActorRef[PolicyCollection]): ReplyEffect[Event, PolicyCollection] = {

@@ -46,4 +46,7 @@ final class PolicyRetrievalPointImpl @Inject() (policyRepository: PolicyReposito
       case JsSuccess(policyCollections, _) => policyCollections foreach {policyCollection => actorSystem ! RegistryPolicyCollection(policyCollection)}
       case JsError.Message(errMsg)         => PolicyCollectionParsingError(errMsg)
     }
+
+  def registerPolicyCollection(policyCollection: PolicyCollection): Unit =
+    actorSystem ! RegistryPolicyCollection(policyCollection)
 }

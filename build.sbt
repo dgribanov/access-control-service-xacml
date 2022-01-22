@@ -35,12 +35,13 @@ lazy val `access-control-api-impl` = (project in file("access-control-api-impl")
   .settings(
     libraryDependencies ++= Seq(
       lagomScaladslTestKit,
+      lagomScaladslKafkaClient,
       macwire,
       scalaTest,
       scalaGuice
     )
   )
-  .dependsOn(`access-control-rest-api`)
+  .dependsOn(`access-control-rest-api`, `access-control-admin-ws-rest-api`)
 
 lazy val `access-control-admin-ws-api-impl` = (project in file("access-control-admin-ws-api-impl"))
   .enablePlugins(LagomScala)
@@ -50,8 +51,7 @@ lazy val `access-control-admin-ws-api-impl` = (project in file("access-control-a
       lagomScaladslPersistenceCassandra,
       lagomScaladslKafkaBroker,
       macwire,
-      scalaTest,
-      scalaGuice
+      scalaTest
     )
   )
   .dependsOn(`access-control-admin-ws-rest-api`)

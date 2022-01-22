@@ -1,19 +1,22 @@
 package com.example.accesscontrol.admin.ws.api.impl
 
-import com.lightbend.lagom.scaladsl.server._
 import com.example.accesscontrol.admin.ws.api.impl.apirest.AccessControlAdminWsServiceImpl
-import com.example.accesscontrol.admin.ws.rest.api.AccessControlAdminWsService
-import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
-import com.lightbend.lagom.scaladsl.api.Descriptor
-import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
-import play.api.libs.ws.ahc.AhcWSComponents
-import com.softwaremill.macwire._
-import akka.cluster.sharding.typed.scaladsl.Entity
 import com.example.accesscontrol.admin.ws.api.impl.domain.PolicyCollection
-import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
 import com.example.accesscontrol.admin.ws.api.impl.domain.PolicyCollectionSerializerRegistry
-import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraPersistenceComponents
+import com.example.accesscontrol.admin.ws.rest.api.AccessControlAdminWsService
+
+import com.lightbend.lagom.scaladsl.api.Descriptor
+import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
 import com.lightbend.lagom.scaladsl.broker.kafka.LagomKafkaComponents
+import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents
+import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraPersistenceComponents
+import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
+import com.lightbend.lagom.scaladsl.server._
+
+import com.softwaremill.macwire._
+import play.api.libs.ws.ahc.AhcWSComponents
+
+import akka.cluster.sharding.typed.scaladsl.Entity
 
 
 class AccessControlAdminLoader extends LagomApplicationLoader {
@@ -39,7 +42,7 @@ abstract class AccessControlAdminApplication(context: LagomApplicationContext)
   override lazy val jsonSerializerRegistry: JsonSerializerRegistry =
     PolicyCollectionSerializerRegistry
 
-  // Initialize the sharding for the ShoppingCart aggregate.
+  // Initialize the sharding for the PolicyCollection aggregate.
   // See https://doc.akka.io/docs/akka/2.6/typed/cluster-sharding.html
   clusterSharding.init(
       Entity(PolicyCollection.typeKey) { entityContext =>
