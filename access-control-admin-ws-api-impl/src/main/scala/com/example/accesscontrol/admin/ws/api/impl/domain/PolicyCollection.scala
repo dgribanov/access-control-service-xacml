@@ -26,9 +26,9 @@ object PolicyCollection {
 
   sealed trait Command extends CommandSerializable
 
-  final case class RegisterPolicySet(policySet: PolicySetSerializable, replyTo: ActorRef[Confirmation]) extends Command
+  final case class RegisterPolicySet(id: String, policySet: PolicySetSerializable, replyTo: ActorRef[Confirmation]) extends Command
 
-  final case class ReadPolicyCollection(replyTo: ActorRef[PolicyCollection]) extends Command
+  final case class ReadPolicyCollection(id: String, replyTo: ActorRef[PolicyCollection]) extends Command
 
   sealed trait Event extends AggregateEvent[Event] {
     override def aggregateTag: AggregateEventTagger[Event] = Event.Tag
@@ -74,7 +74,7 @@ object PolicyCollection {
 
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("PolicyCollection")
 
-  def apply(persistenceId: PersistenceId): EventSourcedBehavior[Command, Event, PolicyCollection] = {
+  def apply(persistenceId: PersistenceId): EventSourcedBehavior[Command, Event, PolicyCollection] =
     EventSourcedBehavior
       .withEnforcedReplies[Command, Event, PolicyCollection](
         persistenceId = persistenceId,
@@ -82,7 +82,6 @@ object PolicyCollection {
         commandHandler = (policyCollection, cmd) => policyCollection.applyCommand(cmd),
         eventHandler = (policyCollection, evt) => policyCollection.applyEvent(evt)
       )
-  }
 
   def apply(entityContext: EntityContext[Command]): Behavior[Command] =
     apply(PersistenceId(entityContext.entityTypeKey.name, entityContext.entityId))
@@ -104,25 +103,24 @@ final case class PolicyCollection(id: Option[String], policySets: Map[String, Po
 
   def applyCommand(command: Command): ReplyEffect[Event, PolicyCollection] =
     command match {
-      case RegisterPolicySet(policySet, replyTo)  => onRegisterPolicySet(policySet, replyTo)
-      case ReadPolicyCollection(replyTo)          => onReadPolicyCollection(replyTo)
+      case RegisterPolicySet(id, policySet, replyTo)  => onRegisterPolicySet(id, policySet, replyTo)
+      case ReadPolicyCollection(id, replyTo)          => onReadPolicyCollection(id, replyTo)
     }
 
   private def onRegisterPolicySet(
+    id: String,
     policySet: PolicySetSerializable,
     replyTo: ActorRef[Confirmation]
-  ): ReplyEffect[Event, PolicyCollection] = {
+  ): ReplyEffect[Event, PolicyCollection] =
     if (policySets.contains(policySet.target.value))
       Effect.reply(replyTo)(Rejected(s"PolicySet with target '${policySet.target.value}' was already added to policy collection"))
     else
       Effect
         .persist(PolicySetRegistered(policySet))
-        .thenReply(replyTo)(_ => Accepted(Summary(id.get, policySet)))
-  }
+        .thenReply(replyTo)(_ => Accepted(Summary(id, policySet)))
 
-  private def onReadPolicyCollection(replyTo: ActorRef[PolicyCollection]): ReplyEffect[Event, PolicyCollection] = {
-      reply(replyTo)(copy())
-  }
+  private def onReadPolicyCollection(id: String, replyTo: ActorRef[PolicyCollection]): ReplyEffect[Event, PolicyCollection] =
+    reply(replyTo)(copy(Some(id)))
 
   def applyEvent(event: Event): PolicyCollection =
     event match {

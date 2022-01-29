@@ -3,6 +3,7 @@ ThisBuild / version := "1.1-SNAPSHOT"
 
 // the Scala version that will be used for cross-compiled libraries
 ThisBuild / scalaVersion := "2.13.0"
+ThisBuild / lagomCassandraCleanOnStart := true
 
 val macwire = "com.softwaremill.macwire" %% "macros" % "2.4.1" % "provided"
 val scalaTest = "org.scalatest" %% "scalatest" % "3.2.10" % Test

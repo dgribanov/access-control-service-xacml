@@ -1,6 +1,6 @@
 package com.example.accesscontrol.admin.ws.rest.api
 
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, JsBoolean, JsNumber, Json}
 
 case class RegisterPolicySetCommand(policySet: PolicySet)
 
@@ -12,7 +12,7 @@ object RegisterPolicySetCommand {
   implicit val format: Format[RegisterPolicySetCommand] = Json.format[RegisterPolicySetCommand]
 }
 
-case class PolicyCollection(policySets: Array[PolicySet])
+case class PolicyCollection(id: String, policySets: Array[PolicySet])
 
 object PolicyCollection {
   implicit val format: Format[PolicyCollection] = Json.format[PolicyCollection]
@@ -74,21 +74,21 @@ object TargetType {
         JsObject(
           Seq(
             "_type" -> JsString("ObjectTypeTarget"),
-            "id"    -> ObjectTypeTarget.format.writes(target)
+            "value" -> JsString(target.value)
           )
         )
       case target: ActionTypeTarget =>
         JsObject(
           Seq(
             "_type" -> JsString("ActionTypeTarget"),
-            "value" -> ActionTypeTarget.format.writes(target)
+            "value" -> JsString(target.value)
           )
         )
       case target: AttributeTypeTarget =>
         JsObject(
           Seq(
             "_type" -> JsString("AttributeTypeTarget"),
-            "value" -> AttributeTypeTarget.format.writes(target)
+            "value" -> JsString(target.value)
           )
         )
     }
@@ -133,18 +133,18 @@ object Condition {
         JsObject(
           Seq(
             "_type"        -> JsString("CompareCondition"),
-            "operation"    -> CompareCondition.format.writes(condition),
-            "leftOperand"  -> CompareCondition.format.writes(condition),
-            "rightOperand" -> CompareCondition.format.writes(condition)
+            "operation"    -> JsString(condition.operation),
+            "leftOperand"  -> ExpressionParameterValue.format.writes(condition.leftOperand),
+            "rightOperand" -> ExpressionParameterValue.format.writes(condition.rightOperand)
           )
         )
       case condition: CompositeCondition =>
         JsObject(
           Seq(
             "_type"          -> JsString("CompositeCondition"),
-            "predicate"      -> CompositeCondition.format.writes(condition),
-            "leftCondition"  -> CompositeCondition.format.writes(condition),
-            "rightCondition" -> CompositeCondition.format.writes(condition)
+            "predicate"      -> JsString(condition.predicate),
+            "leftCondition"  -> Condition.format.writes(condition.leftCondition),
+            "rightCondition" -> Condition.format.writes(condition.rightCondition)
           )
         )
     }
@@ -198,15 +198,15 @@ object Effect {
       case effect: PositiveEffect =>
         JsObject(
           Seq(
-            "_type" -> JsString("PositiveEffect"),
-            "id"    -> PositiveEffect.format.writes(effect)
+            "_type"    -> JsString("PositiveEffect"),
+            "decision" -> EffectDecisions.format.writes(effect.decision)
           )
         )
       case effect: NegativeEffect =>
         JsObject(
           Seq(
-            "_type" -> JsString("NegativeEffect"),
-            "value" -> NegativeEffect.format.writes(effect)
+            "_type"    -> JsString("NegativeEffect"),
+            "decision" -> EffectDecisions.format.writes(effect.decision)
           )
         )
     }
@@ -241,28 +241,28 @@ object ExpressionParameterValue {
         JsObject(
           Seq(
             "_type" -> JsString("AttributeValue"),
-            "id"    -> AttributeParameterValue.format.writes(attr)
+            "id"    -> JsString(attr.id)
           )
         )
       case boolVal: BoolParameterValue =>
         JsObject(
           Seq(
             "_type" -> JsString("BoolValue"),
-            "value" -> BoolParameterValue.format.writes(boolVal)
+            "value" -> JsBoolean(boolVal.value)
           )
         )
       case intVal: IntParameterValue =>
         JsObject(
           Seq(
             "_type" -> JsString("IntValue"),
-            "value" -> IntParameterValue.format.writes(intVal)
+            "value" -> JsNumber(intVal.value)
           )
         )
       case stringVal: StringParameterValue =>
         JsObject(
           Seq(
             "_type" -> JsString("StringValue"),
-            "value" -> StringParameterValue.format.writes(stringVal)
+            "value" -> JsString(stringVal.value)
           )
         )
     }

@@ -5,18 +5,30 @@ import play.api.libs.json.{Format, Json}
 case class PolicySetSerializable(target: TargetTypeSerializable, combiningAlgorithm: CombiningAlgorithms.Algorithm, policies: Array[PolicySerializable]) extends PolicySet
 
 object PolicySetSerializable {
+  def convert: PartialFunction[PolicySet, PolicySetSerializable] = {
+    case ps: PolicySet => PolicySetSerializable(TargetTypeSerializable.convert(ps.target), ps.combiningAlgorithm, ps.policies map PolicySerializable.convert)
+  }
+
   implicit val format: Format[PolicySetSerializable] = Json.format[PolicySetSerializable]
 }
 
 case class PolicySerializable(target: TargetTypeSerializable, combiningAlgorithm: CombiningAlgorithms.Algorithm, rules: Array[RuleSerializable]) extends Policy
 
 object PolicySerializable {
+  def convert: PartialFunction[Policy, PolicySerializable] = {
+    case p: Policy => PolicySerializable(TargetTypeSerializable.convert(p.target), p.combiningAlgorithm, p.rules map RuleSerializable.convert)
+  }
+
   implicit val format: Format[PolicySerializable] = Json.format[PolicySerializable]
 }
 
 case class RuleSerializable(target: TargetTypeSerializable, condition: ConditionSerializable, positiveEffect: PositiveEffectSerializable, negativeEffect: NegativeEffectSerializable) extends Rule
 
 object RuleSerializable {
+  def convert: PartialFunction[Rule, RuleSerializable] = {
+    case r: Rule => RuleSerializable(TargetTypeSerializable.convert(r.target), ConditionSerializable.convert(r.condition), PositiveEffectSerializable.convert(r.positiveEffect), NegativeEffectSerializable.convert(r.negativeEffect))
+  }
+
   implicit val format: Format[RuleSerializable] = Json.format[RuleSerializable]
 }
 
@@ -52,6 +64,12 @@ object AttributeTypeTargetSerializable {
 object TargetTypeSerializable {
   import play.api.libs.json.{JsError, JsObject, JsPath, JsString, Reads, Writes}
 
+  def convert: PartialFunction[TargetType, TargetTypeSerializable] = {
+    case t: ObjectTypeTarget    => ObjectTypeTargetSerializable(t.value)
+    case t: ActionTypeTarget    => ActionTypeTargetSerializable(t.value)
+    case t: AttributeTypeTarget => AttributeTypeTargetSerializable(t.value)
+  }
+
   implicit val format: Format[TargetTypeSerializable] = Format[TargetTypeSerializable] (
     Reads { js =>
       // use the _type field to determine how to deserialize
@@ -70,21 +88,21 @@ object TargetTypeSerializable {
         JsObject(
           Seq(
             "_type" -> JsString("ObjectTypeTarget"),
-            "id"    -> ObjectTypeTargetSerializable.format.writes(target)
+            "value" -> JsString(target.value)
           )
         )
       case target: ActionTypeTargetSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("ActionTypeTarget"),
-            "value" -> ActionTypeTargetSerializable.format.writes(target)
+            "value" -> JsString(target.value)
           )
         )
       case target: AttributeTypeTargetSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("AttributeTypeTarget"),
-            "value" -> AttributeTypeTargetSerializable.format.writes(target)
+            "value" -> JsString(target.value)
           )
         )
     }
@@ -98,8 +116,8 @@ object CombineRulesAlgorithmSerializable {
 }
 
 sealed trait ConditionSerializable extends Condition
-case class CompareConditionSerializable(operation: String, leftOperand: ExpressionParameterValueSerializable, rightOperand: ExpressionParameterValueSerializable) extends ConditionSerializable
-case class CompositeConditionSerializable(predicate: String, leftCondition: ConditionSerializable, rightCondition: ConditionSerializable) extends ConditionSerializable
+case class CompareConditionSerializable(operation: Operations.Operation, leftOperand: ExpressionParameterValueSerializable, rightOperand: ExpressionParameterValueSerializable) extends ConditionSerializable
+case class CompositeConditionSerializable(predicate: Predicates.Predicate, leftCondition: ConditionSerializable, rightCondition: ConditionSerializable) extends ConditionSerializable
 
 object CompareConditionSerializable {
   implicit val format: Format[CompareConditionSerializable] = Json.format[CompareConditionSerializable]
@@ -111,6 +129,21 @@ object CompositeConditionSerializable {
 
 object ConditionSerializable {
   import play.api.libs.json.{JsError, JsObject, JsPath, JsString, Reads, Writes}
+
+  def convert: PartialFunction[Condition, ConditionSerializable] = {
+    case c: CompareCondition =>
+      CompareConditionSerializable(
+        c.operation,
+        ExpressionParameterValueSerializable.convert(c.leftOperand),
+        ExpressionParameterValueSerializable.convert(c.rightOperand)
+      )
+    case c: CompositeCondition =>
+      CompositeConditionSerializable(
+        c.predicate,
+        ConditionSerializable.convert(c.leftCondition),
+        ConditionSerializable.convert(c.rightCondition)
+      )
+  }
 
   implicit val format: Format[ConditionSerializable] = Format[ConditionSerializable] (
     Reads { js =>
@@ -129,18 +162,18 @@ object ConditionSerializable {
         JsObject(
           Seq(
             "_type"        -> JsString("CompareCondition"),
-            "operation"    -> CompareConditionSerializable.format.writes(condition),
-            "leftOperand"  -> CompareConditionSerializable.format.writes(condition),
-            "rightOperand" -> CompareConditionSerializable.format.writes(condition)
+            "operation"    -> Operations.format.writes(condition.operation),
+            "leftOperand"  -> ExpressionParameterValueSerializable.format.writes(condition.leftOperand),
+            "rightOperand" -> ExpressionParameterValueSerializable.format.writes(condition.rightOperand)
           )
         )
       case condition: CompositeConditionSerializable =>
         JsObject(
           Seq(
             "_type"          -> JsString("CompositeCondition"),
-            "predicate"      -> CompositeConditionSerializable.format.writes(condition),
-            "leftCondition"  -> CompositeConditionSerializable.format.writes(condition),
-            "rightCondition" -> CompositeConditionSerializable.format.writes(condition)
+            "predicate"      -> Predicates.format.writes(condition.predicate),
+            "leftCondition"  -> ConditionSerializable.format.writes(condition.leftCondition),
+            "rightCondition" -> ConditionSerializable.format.writes(condition.rightCondition)
           )
         )
     }
@@ -152,10 +185,18 @@ case class PositiveEffectSerializable(decision: EffectDecisions.Decision) extend
 case class NegativeEffectSerializable(decision: EffectDecisions.Decision) extends EffectSerializable
 
 object PositiveEffectSerializable {
+  def convert: PartialFunction[Effect, PositiveEffectSerializable] = {
+    case e: Effect => PositiveEffectSerializable(e.decision)
+  }
+
   implicit val format: Format[PositiveEffectSerializable] = Json.format[PositiveEffectSerializable]
 }
 
 object NegativeEffectSerializable {
+  def convert: PartialFunction[Effect, NegativeEffectSerializable] = {
+    case e: Effect => NegativeEffectSerializable(e.decision)
+  }
+
   implicit val format: Format[NegativeEffectSerializable] = Json.format[NegativeEffectSerializable]
 }
 
@@ -178,15 +219,15 @@ object EffectSerializable {
       case effect: PositiveEffectSerializable =>
         JsObject(
           Seq(
-            "_type" -> JsString("PositiveEffect"),
-            "id"    -> PositiveEffectSerializable.format.writes(effect)
+            "_type"    -> JsString("PositiveEffect"),
+            "decision" -> EffectDecisions.format.writes(effect.decision)
           )
         )
       case effect: NegativeEffectSerializable =>
         JsObject(
           Seq(
-            "_type" -> JsString("NegativeEffect"),
-            "value" -> NegativeEffectSerializable.format.writes(effect)
+            "_type"    -> JsString("NegativeEffect"),
+            "decision" -> EffectDecisions.format.writes(effect.decision)
           )
         )
     }
@@ -200,7 +241,14 @@ case class IntParameterValueSerializable(value: Int) extends ExpressionParameter
 case class StringParameterValueSerializable(value: String) extends ExpressionParameterValueSerializable
 
 object ExpressionParameterValueSerializable {
-  import play.api.libs.json.{JsError, JsObject, JsPath, JsString, Reads, Writes}
+  import play.api.libs.json.{JsError, JsObject, JsPath, JsString, JsBoolean, JsNumber, Reads, Writes}
+
+  def convert: PartialFunction[ExpressionParameterValue, ExpressionParameterValueSerializable] = {
+    case a: AttributeParameterValue => AttributeParameterValueSerializable(a.id)
+    case b: BoolParameterValue      => BoolParameterValueSerializable(b.value)
+    case i: IntParameterValue       => IntParameterValueSerializable(i.value)
+    case s: StringParameterValue    => StringParameterValueSerializable(s.value)
+  }
 
   implicit val format: Format[ExpressionParameterValueSerializable] = Format[ExpressionParameterValueSerializable] (
     Reads { js =>
@@ -221,28 +269,28 @@ object ExpressionParameterValueSerializable {
         JsObject(
           Seq(
             "_type" -> JsString("AttributeValue"),
-            "id"    -> AttributeParameterValueSerializable.format.writes(attr)
+            "id"    -> JsString(attr.id)
           )
         )
       case boolVal: BoolParameterValueSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("BoolValue"),
-            "value" -> BoolParameterValueSerializable.format.writes(boolVal)
+            "value" -> JsBoolean(boolVal.value)
           )
         )
       case intVal: IntParameterValueSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("IntValue"),
-            "value" -> IntParameterValueSerializable.format.writes(intVal)
+            "value" -> JsNumber(intVal.value)
           )
         )
       case stringVal: StringParameterValueSerializable =>
         JsObject(
           Seq(
             "_type" -> JsString("StringValue"),
-            "value" -> StringParameterValueSerializable.format.writes(stringVal)
+            "value" -> JsString(stringVal.value)
           )
         )
     }

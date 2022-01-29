@@ -1,22 +1,26 @@
 package com.example.accesscontrol.admin.ws.api.impl.apirest
 
-import scala.concurrent.{ExecutionContext, Future}
-import akka.cluster.sharding.typed.scaladsl.ClusterSharding
-import akka.NotUsed
-import com.lightbend.lagom.scaladsl.api.ServiceCall
-import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
-import akka.cluster.sharding.typed.scaladsl.EntityRef
 import com.example.accesscontrol.admin.ws.api.impl.domain.{PolicyCollection, PolicySetSerializable}
 import com.example.accesscontrol.admin.ws.api.impl.domain.PolicyCollection._
 import com.example.accesscontrol.admin.ws.rest.api
 
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
+import scala.language.implicitConversions
+
+import akka.cluster.sharding.typed.scaladsl.ClusterSharding
+import akka.cluster.sharding.typed.scaladsl.EntityRef
+import akka.NotUsed
 import akka.util.Timeout
-import com.lightbend.lagom.scaladsl.api.transport.BadRequest
-import com.example.accesscontrol.admin.ws.rest.api.PolicySet
+
 import com.lightbend.lagom.scaladsl.api.broker.Topic
+import com.lightbend.lagom.scaladsl.api.ServiceCall
+import com.lightbend.lagom.scaladsl.api.transport.BadRequest
 import com.lightbend.lagom.scaladsl.broker.TopicProducer
 import com.lightbend.lagom.scaladsl.persistence.EventStreamElement
+import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
+
+import play.api.libs.json.{JsSuccess, Json}
 
 class AccessControlAdminWsServiceImpl(
   clusterSharding: ClusterSharding,
@@ -38,7 +42,7 @@ class AccessControlAdminWsServiceImpl(
   override def registerPolicySet(id: String): ServiceCall[api.RegisterPolicySetCommand, api.PolicySetRegisteredResponse] = ServiceCall {
     command =>
       entityRef(id)
-        .ask(reply => RegisterPolicySet(command.policySet.asInstanceOf[PolicySetSerializable], reply))
+        .ask(reply => RegisterPolicySet(id, command.policySet, reply))
         .map { confirmation =>
           confirmationToResponse(confirmation)
         }
@@ -51,10 +55,19 @@ class AccessControlAdminWsServiceImpl(
           .eventStream(tag, fromOffset)
           .mapAsync(4) { case EventStreamElement(id, _, offset) =>
             entityRef(id)
-              .ask(reply => ReadPolicyCollection(reply))
+              .ask(reply => ReadPolicyCollection(id, reply))
               .map(policyCollection => convertToMessage(policyCollection) -> offset)
           }
     }
+
+  /**
+   * Used for implicit conversion of api.PolicySet to PolicySetSerializable
+   */
+  implicit def convertRequestPolicySetToDomainPolicySet(
+    policySet: api.PolicySet
+  ): PolicySetSerializable = Json.fromJson[PolicySetSerializable](Json.toJson(policySet)) match {
+    case JsSuccess(policySetSerializable, _) => policySetSerializable
+  }
 
   private def confirmationToResponse(confirmation: Confirmation): api.PolicySetRegisteredResponse =
     confirmation match {
@@ -65,9 +78,18 @@ class AccessControlAdminWsServiceImpl(
   private def convertToResponse(summary: Summary): api.PolicySetRegisteredResponse =
     api.PolicySetRegisteredResponse(
       summary.id,
-      summary.policySet.asInstanceOf[PolicySet]
+      Json.fromJson[api.PolicySet](Json.toJson(summary.policySet)) match {
+        case JsSuccess(policySet, _) => policySet
+      }
     )
 
-  private def convertToMessage(policyCollection: PolicyCollection): api.PolicyCollectionRegisteredEvent =
-    api.PolicyCollectionRegisteredEvent(policyCollection.asInstanceOf[api.PolicyCollection])
+  private def convertToMessage(policyCollection: PolicyCollection): api.PolicyCollectionRegisteredEvent = {
+    val policySets = Json.fromJson[Array[api.PolicySet]](Json.toJson(policyCollection.policySets.values.toArray)) match {
+      case JsSuccess(policySets, _) => policySets
+    }
+
+    api.PolicyCollectionRegisteredEvent(
+      api.PolicyCollection(policyCollection.id.get, policySets)
+    )
+  }
 }
