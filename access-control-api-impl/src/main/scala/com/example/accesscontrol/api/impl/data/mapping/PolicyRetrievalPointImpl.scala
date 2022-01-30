@@ -29,7 +29,7 @@ final class PolicyRetrievalPointImpl @Inject() (policyRepository: PolicyReposito
   buildPolicyCollection()
 
   implicit val ec: ExecutionContext = ExecutionContext.global // don`t move! it`s implicit ExecutionContext for Future
-  implicit val timeout: Timeout = Timeout(1.nanosecond) // don`t move! it`s implicit Timeout for Akka ask (?) operator
+  implicit val timeout: Timeout = Timeout(1.second) // don`t move! it`s implicit Timeout for Akka ask (?) operator
   implicit val scheduler: Scheduler = actorSystem.scheduler // don`t move! it`s implicit scheduler for Akka ask (?) operator
 
   def fetchPolicyCollection(subject: String): Future[Option[PolicyCollection]] =

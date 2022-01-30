@@ -71,8 +71,8 @@ object PolicyEvent {
       case event: PolicyCollectionRegisteredEvent =>
         JsObject(
           Seq(
-            "_type" -> JsString("PolicyCollectionRegisteredEvent"),
-            "id"    -> PolicyCollectionRegisteredEvent.format.writes(event)
+            "_type"            -> JsString("PolicyCollectionRegisteredEvent"),
+            "policyCollection" -> PolicyCollection.format.writes(event.policyCollection)
           )
         )
     }

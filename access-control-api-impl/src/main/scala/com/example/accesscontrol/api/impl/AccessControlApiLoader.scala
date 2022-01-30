@@ -33,15 +33,15 @@ abstract class AccessControlApiApplication(context: LagomApplicationContext)(pri
     extends LagomApplication(context)
     with LagomKafkaClientComponents
     with AhcWSComponents {
+  // Bind the AccessControlAdminWsService client
+  lazy val accessControlAdminWsService: AccessControlAdminWsService =
+    serviceClient.implement[AccessControlAdminWsService]
 
   private val serviceInjector: ServiceInjector = new ServiceInjector
   private implicit val policyDecisionPoint: PolicyDecisionPoint = serviceInjector.inject[PolicyDecisionPoint]
   private implicit val policyRecorder: PolicyRecorder = serviceInjector.inject[PolicyRecorder]
+  policyRecorder.handlePolicyEvents(accessControlAdminWsService)
 
   // Bind the service that this server provides
   override lazy val lagomServer: LagomServer = serverFor[AccessControlService](wire[AccessControlRestApiService])
-
-  // Bind the AccessControlAdminWsService client
-  lazy val accessControlAdminWsService: AccessControlAdminWsService =
-    serviceClient.implement[AccessControlAdminWsService]
 }

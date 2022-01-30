@@ -26,8 +26,13 @@ object PolicyDataProvider {
   private def onMessage(policyCollectionMap: Map[String, ActorRef[Message]]): Behavior[Message] =
     Behaviors.receive { (context, message) =>
       (message: @unchecked) match {
-        case RegistryPolicyCollection(policyCollection) =>
-          val newPolicyCollectionMap = policyCollectionMap + (policyCollection.id -> spawnChild(context, policyCollection))
+        case command @ RegistryPolicyCollection(policyCollection) =>
+          val newPolicyCollectionMap = if (policyCollectionMap.contains(policyCollection.id)) {
+            policyCollectionMap.get(policyCollection.id) match {
+              case Some(sendTo) => sendTo ! command
+            }
+            policyCollectionMap
+          } else policyCollectionMap + (policyCollection.id -> spawnChild(context, policyCollection))
           onMessage(newPolicyCollectionMap)
         case command @ FetchPolicyCollection(subject, replyTo) =>
           policyCollectionMap.get(subject) match {

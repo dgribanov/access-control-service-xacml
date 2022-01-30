@@ -89,7 +89,7 @@ class AccessControlAdminWsServiceImpl(
     }
 
     api.PolicyCollectionRegisteredEvent(
-      api.PolicyCollection(policyCollection.id.get, policySets)
+      api.PolicyCollection(policyCollection.id.get, policyCollection.version, policySets)
     )
   }
 }

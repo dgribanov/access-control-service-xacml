@@ -70,7 +70,7 @@ object PolicyCollection {
     }
   }
 
-  def empty: PolicyCollection = PolicyCollection(None, policySets = Map.empty)
+  def empty: PolicyCollection = PolicyCollection(None, "0", policySets = Map.empty)
 
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("PolicyCollection")
 
@@ -98,7 +98,7 @@ object PolicyCollection {
   implicit val policyCollectionFormat: Format[PolicyCollection] = Json.format
 }
 
-final case class PolicyCollection(id: Option[String], policySets: Map[String, PolicySetSerializable]) {
+final case class PolicyCollection(id: Option[String], version: String, policySets: Map[String, PolicySetSerializable]) {
   import PolicyCollection._
 
   def applyCommand(command: Command): ReplyEffect[Event, PolicyCollection] =

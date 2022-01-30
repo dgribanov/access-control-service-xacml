@@ -12,7 +12,7 @@ object RegisterPolicySetCommand {
   implicit val format: Format[RegisterPolicySetCommand] = Json.format[RegisterPolicySetCommand]
 }
 
-case class PolicyCollection(id: String, policySets: Array[PolicySet])
+case class PolicyCollection(id: String, version: String, policySets: Array[PolicySet])
 
 object PolicyCollection {
   implicit val format: Format[PolicyCollection] = Json.format[PolicyCollection]

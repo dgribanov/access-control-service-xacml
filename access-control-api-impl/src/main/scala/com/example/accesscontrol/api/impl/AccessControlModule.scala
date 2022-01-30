@@ -19,7 +19,7 @@ import com.example.accesscontrol.api.impl.domain.{
 class AccessControlModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {
     bind[PolicyDecisionPoint].to[PolicyDecisionPointImpl]
-    bind[PolicyRecorder].to[PolicyRecorderImpl]
+    bind[PolicyRecorder].to[PolicyRecorderImpl].asEagerSingleton()
     bind[PolicyRetrievalPoint].to[PolicyRetrievalPointImpl].asEagerSingleton()
     bind[PolicyRepository].to[PolicyRepositoryImpl]
   }
