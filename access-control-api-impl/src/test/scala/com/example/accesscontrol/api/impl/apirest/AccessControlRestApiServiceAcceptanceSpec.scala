@@ -49,7 +49,7 @@ class AccessControlRestApiServiceAcceptanceSpec extends BaseAcceptanceSpec {
   Feature("Метод проверки доступа пользователя") {
     Scenario("Хочу проверить доступ пользователя (субъекта доступа) к действию над определённым объектом") {
 
-      Given("** проверяю доступ пользователя типа User с ID `user1`")
+      Given("** проверяю доступ пользователя типа User с ID `1`")
       Given("** к действию кататься (`ride`) в отношении объекта типа велосипед (`bicycle`) с ID 1")
       val request = AccessControlRequest(
         Array(Target(objectType = "bicycle", objectId = 1, action = "ride")),
@@ -57,7 +57,7 @@ class AccessControlRestApiServiceAcceptanceSpec extends BaseAcceptanceSpec {
       )
 
       When(">>> делаю запрос на ручку проверки доступа")
-      val response = client.check("user", "user1").invoke(request)
+      val response = client.check("user", "1").invoke(request)
 
       Then("<<< убеждаюсь, проверка доступа работает, ответ корректный")
       response map { answer =>

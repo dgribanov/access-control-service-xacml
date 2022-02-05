@@ -13,6 +13,10 @@ object PolicyDataProvider {
   final case class RegistryPolicySet(policySet: PolicySet) extends Command
   final case class RegistryPolicy(policy: Policy) extends Command
 
+  final case class UpdatePolicyCollection(policyCollection: PolicyCollection) extends Command
+  final case class UpdatePolicySet(policySet: PolicySet) extends Command
+  final case class UpdatePolicy(policy: Policy) extends Command
+
   sealed trait Query extends Message
   final case class FetchPolicyCollection(subject: String, replyTo: ActorRef[Option[PolicyCollection]]) extends Command
   final case class FetchPolicySet(subject: String, target: TargetType, replyTo: ActorRef[Option[PolicySet]]) extends Command
@@ -26,10 +30,10 @@ object PolicyDataProvider {
   private def onMessage(policyCollectionMap: Map[String, ActorRef[Message]]): Behavior[Message] =
     Behaviors.receive { (context, message) =>
       (message: @unchecked) match {
-        case command @ RegistryPolicyCollection(policyCollection) =>
+        case RegistryPolicyCollection(policyCollection) =>
           val newPolicyCollectionMap = if (policyCollectionMap.contains(policyCollection.id)) {
             policyCollectionMap.get(policyCollection.id) match {
-              case Some(sendTo) => sendTo ! command
+              case Some(sendTo) => sendTo ! UpdatePolicyCollection(policyCollection)
             }
             policyCollectionMap
           } else policyCollectionMap + (policyCollection.id -> spawnChild(context, policyCollection))
@@ -80,6 +84,18 @@ object PolicyCollectionProvider {
             policySet => policySet.target.value -> spawnChild(context, policySet)
           ).toMap
           onMessage(Some(policyCollection), newPolicySetMap)
+        case UpdatePolicyCollection(policyCollection) =>
+          context.log.info("Update policy collection: {}", policyCollection)
+          val newPolicySetMap = policyCollection.policySets.map(
+            policySet => if (policySetMap.contains(policySet.target.value)) {
+              policySetMap.get(policySet.target.value) match {
+                case Some(sendTo) =>
+                  sendTo ! UpdatePolicySet(policySet)
+                  policySet.target.value -> sendTo
+              }
+            } else policySet.target.value -> spawnChild(context, policySet)
+          ).toMap
+          onMessage(Some(policyCollection), newPolicySetMap)
         case FetchPolicyCollection(_, replyTo) =>
           replyTo ! policyCollection
           Behaviors.same
@@ -123,6 +139,18 @@ object PolicySetProvider {
             policy => policy.target.value -> spawnChild(context, policy)
           ).toMap
           onMessage(Some(policySet), newPolicyMap)
+        case UpdatePolicySet(policySet) =>
+          context.log.info("Update policy set: {}", policySet)
+          val newPolicyMap = policySet.policies.map(
+            policy => if (policyMap.contains(policy.target.value)) {
+              policyMap.get(policy.target.value) match {
+                case Some(sendTo) =>
+                  sendTo ! UpdatePolicy(policy)
+                  policy.target.value -> sendTo
+              }
+            } else policy.target.value -> spawnChild(context, policy)
+          ).toMap
+          onMessage(Some(policySet), newPolicyMap)
         case FetchPolicySet(_, target, replyTo) =>
           policySet match {
             case Some(ps) if ps.target.value == target.value => replyTo ! Some(ps)
@@ -157,6 +185,9 @@ object PolicyProvider {
       (message: @unchecked) match {
         case RegistryPolicy(policy) =>
           context.log.info("Registry policy: {}", policy)
+          onMessage(Some(policy))
+        case UpdatePolicy(policy) =>
+          context.log.info("Update policy: {}", policy)
           onMessage(Some(policy))
         case FetchPolicy(_, _, target, replyTo) =>
           policy match {
