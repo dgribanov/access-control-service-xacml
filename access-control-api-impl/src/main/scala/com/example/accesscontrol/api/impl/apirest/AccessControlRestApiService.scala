@@ -1,18 +1,11 @@
 package com.example.accesscontrol.api.impl.apirest
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.language.implicitConversions
-
-import akka.NotUsed
-import com.lightbend.lagom.scaladsl.api.ServiceCall
-
 import com.example.accesscontrol.api.impl.domain.{
-  AttributeValue,
-  Target,
   Attribute,
-  TargetedDecision,
-  PolicyDecisionPoint
+  AttributeValue,
+  PolicyDecisionPoint,
+  Target,
+  TargetedDecision
 }
 import com.example.accesscontrol.rest.api.{
   AccessControlError => ApiAccessControlError,
@@ -25,6 +18,12 @@ import com.example.accesscontrol.rest.api.{
   Target => ApiTarget
 }
 
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.implicitConversions
+import akka.NotUsed
+import com.lightbend.lagom.scaladsl.api.ServiceCall
+
 class TargetImpl (val objectType: String, val objectId: Int, val action: String) extends Target
 class AttributeImpl (val name: String, val value: AttributeValue) extends Attribute
 class AttributeValueImpl (val value: Any) extends AttributeValue
@@ -32,7 +31,10 @@ class AttributeValueImpl (val value: Any) extends AttributeValue
 /**
  * Implementation of the AccessControlService.
  */
-class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisionPoint: PolicyDecisionPoint) extends ApiAccessControlService {
+class AccessControlRestApiService()(
+  implicit ec: ExecutionContext,
+  policyDecisionPoint: PolicyDecisionPoint
+) extends ApiAccessControlService {
 
   override def healthcheck: ServiceCall[NotUsed, String] = ServiceCall {
     _ =>
@@ -42,7 +44,7 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisio
   override def check(subject: String, id: String): ServiceCall[ApiAccessControlRequest, ApiAccessControlResponse] = ServiceCall {
     request => {
       policyDecisionPoint
-        .makeDecision(request.targets, request.attributes)
+        .makeDecision(subject, id, request.targets, request.attributes)
         .map[ApiAccessControlResponse](this.convertToResponse)
     }
   }
@@ -77,7 +79,7 @@ class AccessControlRestApiService()(implicit ec: ExecutionContext, policyDecisio
   private def createResultedDecision(targetedDecision: TargetedDecision): ApiResultedDecision = {
     // block main thread while decision is completed
     // todo think more about non block conversation
-    val decision = Await.result(targetedDecision.decision, 1.nanosecond)
+    val decision = Await.result(targetedDecision.decision, 1.second)
 
     ApiResultedDecision(
       targetedDecision.target.objectType,

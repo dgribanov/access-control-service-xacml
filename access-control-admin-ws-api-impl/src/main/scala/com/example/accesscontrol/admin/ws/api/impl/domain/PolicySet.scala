@@ -1,31 +1,6 @@
-package com.example.accesscontrol.api.impl.domain
+package com.example.accesscontrol.admin.ws.api.impl.domain
 
 import play.api.libs.json.{Format, Json}
-
-import scala.concurrent.Future
-
-trait PolicyRetrievalPoint {
-  case class PolicyCollectionParsingError(errorMessage: String) extends RuntimeException
-
-  def fetchPolicyCollection(subject: String): Future[Option[PolicyCollection]]
-  def fetchPolicySet(subject: String, target: TargetType): Future[Option[PolicySet]]
-  def fetchPolicy(subject: String, policySetTarget: TargetType, policyTarget: TargetType): Future[Option[Policy]]
-  def registerPolicyCollection(policyCollection: PolicyCollection): Unit
-
-  // used in tests only
-  def buildPolicyCollection(policyRepository: PolicyRepository): Unit
-}
-
-trait TargetedPolicy {
-  val target: Target
-  val policy: Policy
-}
-
-trait PolicyCollection {
-  val id: String
-  val version: String
-  val policySets: Array[_ <: PolicySet]
-}
 
 trait PolicySet {
   val target: TargetType

@@ -1,0 +1,375 @@
+# curl -H "Content-Type: application/json" -X POST -d '{"policySet": {
+#  "_type": "PolicySet",
+#  "target": {
+#    "_type": "ObjectTypeTarget",
+#    "value": "monocycle"
+#  },
+#  "combiningAlgorithm": "DenyOverride",
+#  "policies": [{
+#    "_type": "Policy",
+#    "target": {
+#      "_type": "ActionTypeTarget",
+#      "value": "ride"
+#    },
+#    "combiningAlgorithm": "DenyOverride",
+#    "rules": [{
+#      "_type": "Rule",
+#      "target": {
+#        "_type": "AttributeTypeTarget",
+#        "value": "permissionToRideMonocycle"
+#      },
+#      "positiveEffect": {
+#        "_type": "PositiveEffect",
+#        "decision": "Permit"
+#      },
+#      "negativeEffect": {
+#        "_type": "NegativeEffect",
+#        "decision": "Deny"
+#      },
+#      "condition": {
+#        "_type": "CompareCondition",
+#        "operation": "eq",
+#        "leftOperand": {
+#          "_type": "AttributeValue",
+#          "id": "permissionToRideMonocycle"
+#        },
+#        "rightOperand": {
+#          "_type": "BoolValue",
+#          "value": true
+#        }
+#      }
+#    }]
+#    },
+#    {
+#      "_type": "Policy",
+#      "target": {
+#        "_type": "ActionTypeTarget",
+#        "value": "rent"
+#      },
+#      "combiningAlgorithm": "PermitOverride",
+#      "rules": [{
+#        "_type": "Rule",
+#        "target": {
+#          "_type": "AttributeTypeTarget",
+#          "value": "permissionToRentMonocycle"
+#        },
+#        "positiveEffect": {
+#          "_type": "PositiveEffect",
+#          "decision": "Permit"
+#        },
+#        "negativeEffect": {
+#          "_type": "NegativeEffect",
+#          "decision": "Deny"
+#        },
+#        "condition": {
+#          "_type": "CompositeCondition",
+#          "predicate": "AND",
+#          "leftCondition": {
+#            "_type": "CompareCondition",
+#            "operation": "eq",
+#            "leftOperand": {
+#              "_type": "AttributeValue",
+#              "id": "permissionToRentMonocycle"
+#            },
+#            "rightOperand": {
+#              "_type": "BoolValue",
+#              "value": true
+#            }
+#          },
+#          "rightCondition": {
+#            "_type": "CompositeCondition",
+#            "predicate": "OR",
+#            "leftCondition": {
+#              "_type": "CompareCondition",
+#              "operation": "gte",
+#              "leftOperand": {
+#                "_type": "AttributeValue",
+#                "id": "personAge"
+#              },
+#              "rightOperand": {
+#                "_type": "IntValue",
+#                "value": 18
+#              }
+#            },
+#            "rightCondition": {
+#              "_type": "CompareCondition",
+#              "operation": "eq",
+#              "leftOperand": {
+#                "_type": "AttributeValue",
+#                "id": "bicycleType"
+#              },
+#              "rightOperand": {
+#                "_type": "StringValue",
+#                "value": "mono"
+#              }
+#            }
+#          }
+#        }
+#      }]
+#    }]
+#}}' http://localhost:9000/api/access-control-admin/policy-collection/user/policy-set
+POST http://localhost:9000/api/access-control-admin/policy-collection/user/policy-set
+Content-Type: application/json
+
+{"policySet": {
+  "_type": "PolicySet",
+  "target": {
+    "_type": "ObjectTypeTarget",
+    "value": "monocycle"
+  },
+  "combiningAlgorithm": "DenyOverride",
+  "policies": [{
+    "_type": "Policy",
+    "target": {
+      "_type": "ActionTypeTarget",
+      "value": "ride"
+    },
+    "combiningAlgorithm": "DenyOverride",
+    "rules": [{
+      "_type": "Rule",
+      "target": {
+        "_type": "AttributeTypeTarget",
+        "value": "permissionToRideMonocycle"
+      },
+      "positiveEffect": {
+        "_type": "PositiveEffect",
+        "decision": "Permit"
+      },
+      "negativeEffect": {
+        "_type": "NegativeEffect",
+        "decision": "Deny"
+      },
+      "condition": {
+        "_type": "CompareCondition",
+        "operation": "eq",
+        "leftOperand": {
+          "_type": "AttributeValue",
+          "id": "permissionToRideMonocycle"
+        },
+        "rightOperand": {
+          "_type": "BoolValue",
+          "value": true
+        }
+      }
+    }]
+    },
+    {
+      "_type": "Policy",
+      "target": {
+        "_type": "ActionTypeTarget",
+        "value": "rent"
+      },
+      "combiningAlgorithm": "PermitOverride",
+      "rules": [{
+        "_type": "Rule",
+        "target": {
+          "_type": "AttributeTypeTarget",
+          "value": "permissionToRentMonocycle"
+        },
+        "positiveEffect": {
+          "_type": "PositiveEffect",
+          "decision": "Permit"
+        },
+        "negativeEffect": {
+          "_type": "NegativeEffect",
+          "decision": "Deny"
+        },
+        "condition": {
+          "_type": "CompositeCondition",
+          "predicate": "AND",
+          "leftCondition": {
+            "_type": "CompareCondition",
+            "operation": "eq",
+            "leftOperand": {
+              "_type": "AttributeValue",
+              "id": "permissionToRentMonocycle"
+            },
+            "rightOperand": {
+              "_type": "BoolValue",
+              "value": true
+            }
+          },
+          "rightCondition": {
+            "_type": "CompositeCondition",
+            "predicate": "OR",
+            "leftCondition": {
+              "_type": "CompareCondition",
+              "operation": "gte",
+              "leftOperand": {
+                "_type": "AttributeValue",
+                "id": "personAge"
+              },
+              "rightOperand": {
+                "_type": "IntValue",
+                "value": 18
+              }
+            },
+            "rightCondition": {
+              "_type": "CompareCondition",
+              "operation": "eq",
+              "leftOperand": {
+                "_type": "AttributeValue",
+                "id": "bicycleType"
+              },
+              "rightOperand": {
+                "_type": "StringValue",
+                "value": "mono"
+              }
+            }
+          }
+        }
+      }]
+    }]
+}}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "monocycle", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideMonocycle", "value": {"_type": "bool", "value": true}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "monocycle", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideMonocycle", "value": {"_type": "bool", "value": true}}]}
+
+###
+
+# Permit all
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "ride"}, {"objectType": "bicycle", "objectId": 1, "action": "rent"}, {"objectType": "skateboard", "objectId": 1, "action": "ride"}, {"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 17}}, {"name": "bicycleType", "value": {"_type": "string", "value": "tricycle"}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": true}}, {"name": "placeType", "value": {"_type": "string", "value": "street"}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": true}}, {"name": "profession", "value": {"_type": "string", "value": "courier"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "ride"}, {"objectType": "bicycle", "objectId": 1, "action": "rent"}, {"objectType": "skateboard", "objectId": 1, "action": "ride"}, {"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 17}}, {"name": "bicycleType", "value": {"_type": "string", "value": "tricycle"}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": true}}, {"name": "placeType", "value": {"_type": "string", "value": "street"}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": true}}, {"name": "profession", "value": {"_type": "string", "value": "courier"}}]}
+
+###
+
+# Deny
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": false}}, {"name": "profession", "value": {"_type": "string", "value": "programmer"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": false}}, {"name": "profession", "value": {"_type": "string", "value": "programmer"}}]}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": false}}, {"name": "profession", "value": {"_type": "string", "value": "courier"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": false}}, {"name": "profession", "value": {"_type": "string", "value": "courier"}}]}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": true}}, {"name": "profession", "value": {"_type": "string", "value": "programmer"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": true}}, {"name": "profession", "value": {"_type": "string", "value": "programmer"}}]}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": true}}, {"name": "profession", "value": {"_type": "string", "value": "courier"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "scooter", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideScooter", "value": {"_type": "bool", "value": true}}, {"name": "profession", "value": {"_type": "string", "value": "courier"}}]}
+
+###
+
+# Deny
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "skateboard", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": true}}, {"name": "placeType", "value": {"_type": "string", "value": "office"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "skateboard", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": true}}, {"name": "placeType", "value": {"_type": "string", "value": "office"}}]}
+
+###
+
+# Deny
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "skateboard", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": false}}, {"name": "placeType", "value": {"_type": "string", "value": "street"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "skateboard", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": false}}, {"name": "placeType", "value": {"_type": "string", "value": "street"}}]}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "skateboard", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": true}}, {"name": "placeType", "value": {"_type": "string", "value": "street"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "skateboard", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideSkateboard", "value": {"_type": "bool", "value": true}}, {"name": "placeType", "value": {"_type": "string", "value": "street"}}]}
+
+###
+
+# Deny
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": false}}, {"name": "personAge", "value": {"_type": "int", "value": 23}}, {"name": "bicycleType", "value": {"_type": "string", "value": "tricycle"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": false}}, {"name": "personAge", "value": {"_type": "int", "value": 23}}, {"name": "bicycleType", "value": {"_type": "string", "value": "tricycle"}}]}
+
+###
+
+# Deny
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 17}}, {"name": "bicycleType", "value": {"_type": "string", "value": "two-wheeled"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 17}}, {"name": "bicycleType", "value": {"_type": "string", "value": "two-wheeled"}}]}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 23}}, {"name": "bicycleType", "value": {"_type": "string", "value": "unicycle"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 23}}, {"name": "bicycleType", "value": {"_type": "string", "value": "unicycle"}}]}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 17}}, {"name": "bicycleType", "value": {"_type": "string", "value": "tricycle"}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "rent"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}, {"name": "permissionToRentBicycle", "value": {"_type": "bool", "value": true}}, {"name": "personAge", "value": {"_type": "int", "value": 17}}, {"name": "bicycleType", "value": {"_type": "string", "value": "tricycle"}}]}
+
+###
+
+# Deny
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": false}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": false}}]}
+
+###
+
+# Permit
+
+# curl -H "Content-Type: application/json" -X POST -d '{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}]}' http://localhost:9000/api/access-control/check/user/1
+POST http://localhost:9000/api/access-control/check/user/1
+Content-Type: application/json
+
+{"targets": [{"objectType": "bicycle", "objectId": 1, "action": "ride"}], "attributes": [{"name": "userId", "value": {"_type": "int", "value": 1}}, {"name": "permissionToRideBicycle", "value": {"_type": "bool", "value": true}}]}
+
+###

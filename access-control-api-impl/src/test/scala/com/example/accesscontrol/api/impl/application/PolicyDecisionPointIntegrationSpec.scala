@@ -12,6 +12,7 @@ import com.example.accesscontrol.api.impl.domain.{
 }
 import com.example.accesscontrol.api.impl.BaseIntegrationSpec
 import com.example.accesscontrol.api.impl.data.mapping.PolicyRetrievalPointImpl
+
 import org.scalatest.Assertion
 
 import scala.concurrent.Future
@@ -23,7 +24,11 @@ class TestAttributeValue (val value: Any) extends AttributeValue
 class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   val policyRepository: PolicyRepository = new TestPolicyRepositoryImpl
-  val policyRetrievalPoint: PolicyRetrievalPoint = new PolicyRetrievalPointImpl(policyRepository)
+  val policyRetrievalPoint: PolicyRetrievalPoint = new PolicyRetrievalPointImpl()
+  policyRetrievalPoint.buildPolicyCollection(policyRepository)
+
+  val subject: String = "user"
+  val userId: String = "1"
 
   info("Как сервис, управляющий продажей и арендой велосипедов, самокатов и скейтов, я хочу проверить доступ пользователя к основным действиям с моими товарами.")
 
@@ -35,7 +40,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       val attributes = Array(new TestAttribute("permissionToFlyHelicopter", new TestAttributeValue(true)).asInstanceOf[Attribute])
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что проверка доступа НЕ ПРИМЕНИМА для объекта `вертолёт`")
       assertDecision(decisions, nonApplicable = true)
@@ -50,7 +55,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       val attributes = Array(new TestAttribute("permissionToRideBicycle", new TestAttributeValue(true)).asInstanceOf[Attribute])
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, permit = true)
@@ -63,7 +68,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       val attributes = Array(new TestAttribute("permissionToRideBicycle", new TestAttributeValue(false)).asInstanceOf[Attribute])
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, deny = true)
@@ -82,7 +87,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, permit = true)
@@ -101,7 +106,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, deny = true)
@@ -120,7 +125,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, permit = true)
@@ -139,7 +144,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, deny = true)
@@ -158,7 +163,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, permit = true)
@@ -175,7 +180,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, deny = true)
@@ -192,7 +197,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, deny = true)
@@ -211,7 +216,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, permit = true)
@@ -228,7 +233,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, permit = true)
@@ -245,7 +250,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, permit = true)
@@ -262,7 +267,7 @@ class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
       )
 
       When(">>> запрашиваем проверку доступа")
-      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(targets, attributes)
+      val decisions = PolicyDecisionPointImpl(policyRetrievalPoint).makeDecision(subject, userId, targets, attributes)
 
       Then("<<< убеждаемся, что пользователь НЕ ПОЛУЧАЕТ необходимый доступ")
       assertDecision(decisions, deny = true)
