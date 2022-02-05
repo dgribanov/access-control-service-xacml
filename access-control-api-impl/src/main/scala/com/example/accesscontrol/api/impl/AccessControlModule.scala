@@ -8,10 +8,8 @@ import com.example.accesscontrol.api.impl.application.{
   PolicyRecorderImpl
 }
 import com.example.accesscontrol.api.impl.data.mapping.PolicyRetrievalPointImpl
-import com.example.accesscontrol.api.impl.data.storage.PolicyRepositoryImpl
 import com.example.accesscontrol.api.impl.domain.{
   PolicyDecisionPoint,
-  PolicyRepository,
   PolicyRetrievalPoint,
   PolicyRecorder
 }
@@ -21,6 +19,5 @@ class AccessControlModule extends AbstractModule with ScalaModule {
     bind[PolicyDecisionPoint].to[PolicyDecisionPointImpl]
     bind[PolicyRecorder].to[PolicyRecorderImpl].asEagerSingleton()
     bind[PolicyRetrievalPoint].to[PolicyRetrievalPointImpl].asEagerSingleton()
-    bind[PolicyRepository].to[PolicyRepositoryImpl]
   }
 }

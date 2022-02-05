@@ -12,6 +12,7 @@ import com.example.accesscontrol.api.impl.domain.{
 }
 import com.example.accesscontrol.api.impl.BaseIntegrationSpec
 import com.example.accesscontrol.api.impl.data.mapping.PolicyRetrievalPointImpl
+
 import org.scalatest.Assertion
 
 import scala.concurrent.Future
@@ -23,7 +24,8 @@ class TestAttributeValue (val value: Any) extends AttributeValue
 class PolicyDecisionPointIntegrationSpec extends BaseIntegrationSpec {
 
   val policyRepository: PolicyRepository = new TestPolicyRepositoryImpl
-  val policyRetrievalPoint: PolicyRetrievalPoint = new PolicyRetrievalPointImpl(policyRepository)
+  val policyRetrievalPoint: PolicyRetrievalPoint = new PolicyRetrievalPointImpl()
+  policyRetrievalPoint.buildPolicyCollection(policyRepository)
 
   val subject: String = "user"
   val userId: String = "1"
