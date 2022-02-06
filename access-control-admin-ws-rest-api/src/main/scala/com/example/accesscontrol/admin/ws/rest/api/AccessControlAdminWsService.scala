@@ -11,14 +11,14 @@ object AccessControlAdminWsService {
 }
 trait AccessControlAdminWsService extends Service {
   /**
-   * Example: curl http://localhost:9000/healthcheck/access-control-admin
+   * Example: curl http://localhost:9000/admin/health-check
    */
-  def healthcheck: ServiceCall[NotUsed, String]
+  def healthCheck: ServiceCall[NotUsed, String]
 
   /**
    * Example: curl -H "Content-Type: application/json" -X POST
    *
-   * http://localhost:9000/api/access-control-admin/policy-collection/:id/policy-set
+   * http://localhost:9000/admin/api/policy-collection/:id/policy-set
    */
   def registerPolicySet(id: String): ServiceCall[RegisterPolicySetCommand, PolicySetRegisteredResponse]
 
@@ -29,8 +29,8 @@ trait AccessControlAdminWsService extends Service {
     // @formatter:off
     named("access-control-admin")
       .withCalls(
-        restCall(Method.GET, "/healthcheck/access-control-admin", healthcheck),
-        restCall(Method.POST, "/api/access-control-admin/policy-collection/:id/policy-set", registerPolicySet _),
+        restCall(Method.GET, "/admin/health-check", healthCheck),
+        restCall(Method.POST, "/admin/api/policy-collection/:id/policy-set", registerPolicySet _),
       )
       .withTopics(
         topic(AccessControlAdminWsService.TOPIC_NAME, policyEventsTopic)

@@ -8,8 +8,11 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
+import akka.actor.ActorSystem
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.cluster.sharding.typed.scaladsl.EntityRef
+import akka.management.cluster.bootstrap.ClusterBootstrap
+import akka.management.javadsl.AkkaManagement
 import akka.NotUsed
 import akka.util.Timeout
 
@@ -19,14 +22,26 @@ import com.lightbend.lagom.scaladsl.api.transport.BadRequest
 import com.lightbend.lagom.scaladsl.broker.TopicProducer
 import com.lightbend.lagom.scaladsl.persistence.EventStreamElement
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
+import com.lightbend.lagom.scaladsl.server.LagomApplicationContext
+import play.api.Mode
 
 import play.api.libs.json.{JsSuccess, Json}
 
 class AccessControlAdminWsServiceImpl(
   clusterSharding: ClusterSharding,
-  persistentEntityRegistry: PersistentEntityRegistry
+  persistentEntityRegistry: PersistentEntityRegistry,
+  system: ActorSystem,
+  context: LagomApplicationContext
 )(implicit ec: ExecutionContext) extends api.AccessControlAdminWsService {
   implicit val timeout: Timeout = Timeout(5.seconds)
+
+  AkkaManagement.get(system).start()
+  ClusterBootstrap.get(system).start()
+
+  if (context.playContext.environment.mode != Mode.Dev) {
+    // Starting the bootstrap process in production
+    // ClusterBootstrap.get(system).start()
+  }
 
   /**
    * Looks up the PolicyCollection entity for the given ID.
@@ -34,7 +49,7 @@ class AccessControlAdminWsServiceImpl(
   private def entityRef(id: String): EntityRef[Command] =
     clusterSharding.entityRefFor(PolicyCollection.typeKey, id)
 
-  override def healthcheck: ServiceCall[NotUsed, String] = ServiceCall {
+  override def healthCheck: ServiceCall[NotUsed, String] = ServiceCall {
     _ =>
       Future.successful("Hi from Access Control!")
   }

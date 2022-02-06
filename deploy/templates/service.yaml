@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.adminApi.appName }}-service
+spec:
+  type: NodePort
+  selector:
+{{ include "adminApi.labels" . | indent 4 }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.publicApi.appName }}-service
+spec:
+  type: NodePort
+  selector:
+{{ include "publicApi.labels" . | indent 4 }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

@@ -36,7 +36,7 @@ class AccessControlRestApiService()(
   policyDecisionPoint: PolicyDecisionPoint
 ) extends ApiAccessControlService {
 
-  override def healthcheck: ServiceCall[NotUsed, String] = ServiceCall {
+  override def healthCheck: ServiceCall[NotUsed, String] = ServiceCall {
     _ =>
       Future.successful("Hi from Access Control!")
   }

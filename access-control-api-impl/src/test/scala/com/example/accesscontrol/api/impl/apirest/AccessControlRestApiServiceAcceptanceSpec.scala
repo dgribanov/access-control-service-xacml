@@ -37,7 +37,7 @@ class AccessControlRestApiServiceAcceptanceSpec extends BaseAcceptanceSpec {
     Scenario("Хочу проверить пульс у сервиса AccessControl") {
 
       When(">>> делаю запрос на ручку `проверки пульса`")
-      val response = client.healthcheck.invoke()
+      val response = client.healthCheck.invoke()
 
       Then("<<< убеждаюсь, что пульс прощупывается, пациент скорее жив...")
       response map { answer =>

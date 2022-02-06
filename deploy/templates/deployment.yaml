@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+  {{ include "adminApi.labels" . | indent 4 }}
+  name: {{ .Values.adminApi.appName }}-deployment
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.adminApi.replicas }}
+  selector:
+    matchLabels:
+    {{ include "adminApi.labels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+      {{ include "adminApi.labels" . | indent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.adminApi.appName }}
+          image: access-control-admin:latest
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: management
+            periodSeconds: 10
+            failureThreshold: 10
+            initialDelaySeconds: 20
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: management
+            periodSeconds: 10
+            failureThreshold: 10
+            initialDelaySeconds: 20
+          ports:
+            - name: management
+              containerPort: 8558
+              protocol: TCP
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              memory: 1024Mi
+            requests:
+              cpu: 2
+              memory: 1024Mi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+  {{ include "publicApi.labels" . | indent 4 }}
+  name: {{ .Values.publicApi.appName }}-deployment
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.publicApi.replicas }}
+  selector:
+    matchLabels:
+    {{ include "publicApi.labels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+      {{ include "publicApi.labels" . | indent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.publicApi.appName }}
+          image: access-control-admin:latest
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: management
+            periodSeconds: 10
+            failureThreshold: 10
+            initialDelaySeconds: 20
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: management
+            periodSeconds: 10
+            failureThreshold: 10
+            initialDelaySeconds: 20
+          ports:
+            - name: management
+              containerPort: 8558
+              protocol: TCP
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              memory: 1024Mi
+            requests:
+              cpu: 2
+              memory: 1024Mi

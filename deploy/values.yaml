@@ -1,0 +1,11 @@
+namespace: access-control-application
+
+publicApi: {
+  appName: access-control-public-api
+  replicas: 3
+}
+
+adminApi: {
+  appName: access-control-admin-api
+  replicas: 3
+}
