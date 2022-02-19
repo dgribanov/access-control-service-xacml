@@ -1,0 +1,9 @@
+dependencies:
+- name: strimzi-kafka-operator
+  repository: https://strimzi.io/charts/
+  version: 0.27.1
+- name: cassandra
+  repository: https://charts.bitnami.com/bitnami/
+  version: 9.1.5
+digest: sha256:28d5c38dbc281318b1fe9393cc116b6c007c356851c22d3c2a674328f52112cf
+generated: "2022-02-13T18:21:36.04506277+03:00"

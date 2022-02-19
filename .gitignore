@@ -15,6 +15,7 @@ logs
 /hello-world-impl/
 /hello-world-stream-api/
 /hello-world-stream-impl/
+/deploy/access-control-helm-chart/charts/
 /.bsp/
 /.idea/
 

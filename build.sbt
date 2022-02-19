@@ -1,8 +1,12 @@
 ThisBuild / organization := "com.example"
-ThisBuild / version := "1.1-SNAPSHOT"
+
+// used sbt-dynver plugin to dynamically set version from git
+// ThisBuild / version := "1.1-SNAPSHOT"
 
 // the Scala version that will be used for cross-compiled libraries
 ThisBuild / scalaVersion := "2.13.0"
+
+// clean data in Cassandra on start sbt
 ThisBuild / lagomCassandraCleanOnStart := true
 
 val macwire = "com.softwaremill.macwire" %% "macros" % "2.4.1" % "provided"
@@ -22,9 +26,20 @@ enablePlugins(JavaAppPackaging, DockerPlugin)
 ThisBuild / dynverSeparator := "-"
 
 dockerBaseImage := "adoptopenjdk:11-jre-hotspot"
+//dockerBaseImage := "openjdk:8-jre-slim"
 dockerUsername := sys.props.get("docker.username")
 dockerRepository := sys.props.get("docker.registry")
 dockerUpdateLatest := true
+
+// fix for `AccessDeniedException: /opt/docker/RUNNING_PID`
+import com.typesafe.sbt.packager.docker.DockerChmodType
+dockerChmodType := DockerChmodType.UserGroupWriteExecute
+
+// exposed TCP ports for docker image
+dockerExposedPorts ++= Seq(9000, 9001)
+
+// exposed UDP ports for docker image
+dockerExposedUdpPorts += 4444
 
 lazy val `access-control` = (project in file("."))
   .aggregate(
@@ -59,6 +74,9 @@ lazy val `access-control-api-impl` = (project in file("access-control-api-impl")
       scalaGuice
     ) ++ akkaManagementDeps
   )
+  .settings(
+    Docker / packageName := "access-control-api"
+  )
   .dependsOn(`access-control-rest-api`, `access-control-admin-ws-rest-api`)
 
 lazy val `access-control-admin-ws-api-impl` = (project in file("access-control-admin-ws-api-impl"))
@@ -71,5 +89,8 @@ lazy val `access-control-admin-ws-api-impl` = (project in file("access-control-a
       macwire,
       scalaTest
     ) ++ akkaManagementDeps
+  )
+  .settings(
+    Docker / packageName := "access-control-admin"
   )
   .dependsOn(`access-control-admin-ws-rest-api`)

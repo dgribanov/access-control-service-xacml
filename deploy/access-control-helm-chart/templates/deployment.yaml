@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "access-control.adminApi.fullname" . }}
+  labels:
+    {{- include "access-control.adminApi.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "access-control.adminApi.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "access-control.adminApi.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "access-control.adminApi.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 9000
+            - name: akka-remote
+              containerPort: 2552
+            - name: akka-mgmt-http
+              containerPort: 8558
+          envFrom:
+            - secretRef:
+                name: env-secret
+          env:
+            - name: "HTTP_BIND_ADDRESS"
+              value: "0.0.0.0"
+            - name: JAVA_OPTS
+              value: "-Dconfig.resource=application.prod.conf -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap"
+            - name: CASSANDRA_CONTACT_POINT
+              value: "access-control-cassandra.default.svc.cluster.local"
+            - name: KAFKA_BROKERS_SERVICE_URL
+              value: "access-control-kafka:9092"
+          livenessProbe:
+            httpGet:
+              path: /admin/health-check
+              port: http
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /admin/health-check
+              port: http
+            failureThreshold: 1
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 1
+          startupProbe:
+            httpGet:
+              path: /admin/health-check
+              port: http
+            failureThreshold: 30
+            successThreshold: 1
+            periodSeconds: 10
+            timeoutSeconds: 1
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
