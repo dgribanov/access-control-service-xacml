@@ -22,12 +22,12 @@
 ## Run Kubernetes cluster:
 1) minikube start
 2) helm repo add strimzi-kafka-operator https://strimzi.io/charts/
-   helm repo add cassandra https://charts.bitnami.com/bitnami/
-   helm dependency build ./deploy/access-control-helm-chart
+3) helm repo add cassandra https://charts.bitnami.com/bitnami/
+4) helm dependency build ./deploy/access-control-helm-chart
    (import dependencies - kafka, cassandra)
-3) helm install --set image.repository=access-control-admin --set image.tag=0.0.1 access-control ./deploy/access-control-helm-chart
+5) helm install --set image.repository=access-control-admin --set image.tag=0.0.1 access-control ./deploy/access-control-helm-chart
    (install local helm chart, set image.tag to actual)
-4) helm uninstall access-control
+6) helm uninstall access-control
    (clean cluster)
 
 
